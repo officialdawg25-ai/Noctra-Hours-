@@ -25,7 +25,7 @@ Configure these as encrypted Cloudflare Pages environment variables before enabl
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only Supabase service-role key. Never expose it in browser code.
 - `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile secret key.\n- `ENQUIRY_RATE_LIMIT`: Cloudflare Workers Rate Limiting binding, keyed by client IP.\n- `RESEND_API_KEY`, `NOTIFICATION_EMAIL`, `FROM_EMAIL`: optional Resend email delivery settings for internal alerts and client acknowledgements.
 
-The contact form requires build-time `VITE_TURNSTILE_SITE_KEY`, the encrypted `TURNSTILE_SECRET_KEY`, a rate-limit binding and the Supabase service-role secret. The API intentionally fails closed until all mandatory controls are configured.
+The contact form requires build-time `VITE_TURNSTILE_SITE_KEY`, the encrypted `TURNSTILE_SECRET_KEY`, a rate-limit binding and the Supabase service-role secret. The API intentionally fails closed until all mandatory controls are configured. Email delivery is optional but must be configured and tested before the site promises acknowledgements or internal notifications.
 
 ## Important launch checks
 
@@ -33,7 +33,7 @@ The contact form requires build-time `VITE_TURNSTILE_SITE_KEY`, the encrypted `T
 - Configure Cloudflare Pages project and encrypted environment variables.
 - Configure Turnstile site key and allowed hostnames.
 - Test a real enquiry end-to-end and verify the database record.
-- Add transactional email notification after selecting and configuring a provider.
+- Verify Resend notification and acknowledgement delivery after configuring the sender domain and credentials.
 - Review the privacy notice, retention period and final terms before public launch.
 - Update the canonical domain and sitemap after the production hostname is confirmed.
 
