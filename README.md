@@ -23,9 +23,9 @@ Configure these as encrypted Cloudflare Pages environment variables before enabl
 
 - `SUPABASE_URL`: the Noctra Hours Supabase project URL.
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only Supabase service-role key. Never expose it in browser code.
-- `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile secret key.
+- `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile secret key.\n- `ENQUIRY_RATE_LIMIT`: Cloudflare Workers Rate Limiting binding, keyed by client IP.\n- `RESEND_API_KEY`, `NOTIFICATION_EMAIL`, `FROM_EMAIL`: optional Resend email delivery settings for internal alerts and client acknowledgements.
 
-The contact form requires a Turnstile widget/site key in the frontend before production use. Add the site key and render the widget in the contact form, then send its token as `turnstile_token`. Until the secrets and widget are configured, the API intentionally fails closed with HTTP 503.
+The contact form requires build-time `VITE_TURNSTILE_SITE_KEY`, the encrypted `TURNSTILE_SECRET_KEY`, a rate-limit binding and the Supabase service-role secret. The API intentionally fails closed until all mandatory controls are configured.
 
 ## Important launch checks
 
