@@ -1,0 +1,8 @@
+name = "noctra-hours"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-10-30"
+
+[[ratelimits]]
+name = "ENQUIRY_RATE_LIMIT"
+namespace_id = "834201"
+simple = { limit = 5, period = 60 }
