@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://noctra-hours.pages.dev/sitemap.xml
