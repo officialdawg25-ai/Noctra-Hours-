@@ -3,7 +3,7 @@ const clean = (value, max) => {
   if (typeof value !== 'string') return '';
   return value.trim().split('').filter(character => {
     const code=character.charCodeAt(0);
-    return !(code<=8 || code===11 || code===12 || (code>=14&&code<=31) || code===127);
+    return !(code<=31 || code===127);
   }).join('').slice(0,max);
 };
 const digest = async value => {
@@ -23,6 +23,7 @@ export async function onRequestPost({request, env}) {
     if(raw.length>16000) return json({error:'The submitted information is too large.'},413);
     let body;
     try { body=JSON.parse(raw); } catch { return json({error:'Invalid request body.'},400); }
+    if(!body || typeof body!=='object' || Array.isArray(body)) return json({error:'Invalid request body.'},400);
     if(clean(body.website,200)) return json({ok:true},200);
 
     const supabaseUrl=env.SUPABASE_URL.endsWith('/')?env.SUPABASE_URL.slice(0,-1):env.SUPABASE_URL;
@@ -46,7 +47,7 @@ export async function onRequestPost({request, env}) {
     const desired_timeline=clean(body.desired_timeline,80);
     const preferred_contact_method=clean(body.preferred_contact_method,30);
     const emailParts=email.split('@');
-    if(full_name.length<2 || emailParts.length!==2 || !emailParts[1].includes('.') || emailParts.some(part=>!part) || project_description.length<20 || !service_required || body.privacy_consent!==true) return json({error:'Please check the required fields and privacy consent.'},400);
+    if(full_name.length<2 || emailParts.length!==2 || !emailParts[1].includes('.') || emailParts.some(part=>!part) || email.includes(' ') || project_description.length<20 || !['Web development','E-commerce','Digital systems','Website care','Not sure yet'].includes(service_required) || body.privacy_consent!==true) return json({error:'Please check the required fields and privacy consent.'},400);
     if(!['Email','WhatsApp','Phone'].includes(preferred_contact_method)) return json({error:'Invalid contact preference.'},400);
 
     const token=clean(body.turnstile_token,2048);
