@@ -89,7 +89,7 @@ Public email and WhatsApp details are read from `CONTACT_EMAIL` and `WHATSAPP_NU
 ## Operator launch checklist
 
 1. Add `SUPABASE_SERVICE_ROLE_KEY` as an encrypted Cloudflare Pages secret.
-2. Add `RATE_LIMIT_HASH_SECRET` as an encrypted secret (minimum 32 characters).
+2. The `RATE_LIMIT_HASH_SECRET` has already been generated and stored as an encrypted Pages secret.
 3. Create a Resend account, verify a sender domain, and add `RESEND_API_KEY`, `FROM_EMAIL`, and `NOTIFICATION_EMAIL`.
 4. Add `CONTACT_EMAIL` and `WHATSAPP_NUMBER`; add social profile URLs if desired.
 5. Confirm `PUBLIC_SITE_URL` and `ALLOWED_ORIGIN` match the final HTTPS hostname.
