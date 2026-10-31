@@ -1,0 +1,18 @@
+# Copy to .dev.vars for local Pages Functions development.
+# Never commit real secrets.
+PUBLIC_SITE_URL=https://noctra-hours.pages.dev
+ALLOWED_ORIGIN=https://noctra-hours.pages.dev
+CONTACT_EMAIL=
+WHATSAPP_NUMBER=
+SOCIAL_INSTAGRAM_URL=
+SOCIAL_LINKEDIN_URL=
+SOCIAL_FACEBOOK_URL=
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+TURNSTILE_ALLOWED_HOSTNAMES=noctra-hours.pages.dev
+RATE_LIMIT_HASH_SECRET=
+RESEND_API_KEY=
+NOTIFICATION_EMAIL=
+FROM_EMAIL=
