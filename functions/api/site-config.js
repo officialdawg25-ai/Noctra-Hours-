@@ -1,6 +1,10 @@
 const safeUrl = value => {
   try { const url=new URL(value); return url.protocol==='https:'?url.toString():null; } catch { return null; }
 };
+const safeEmail = value => {
+  const email=String(value||'').trim();
+  return email.length<=254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)?email:'';
+};
 export async function onRequestGet({request,env}) {
   const siteUrl=safeUrl(env.PUBLIC_SITE_URL)||new URL(request.url).origin;
   const whatsappNumber=String(env.WHATSAPP_NUMBER||'').replace(/[^0-9]/g,'');
@@ -13,11 +17,11 @@ export async function onRequestGet({request,env}) {
   const enquiryFormReady=required.every(key=>typeof env[key]==='string'&&env[key].trim())&&String(env.RATE_LIMIT_HASH_SECRET).length>=32;
   return new Response(JSON.stringify({
     siteUrl,
-    contactEmail:env.CONTACT_EMAIL||'',
+    contactEmail:safeEmail(env.CONTACT_EMAIL),
     whatsappNumber,
     whatsappUrl:whatsappNumber?'https://wa.me/'+whatsappNumber:'',
     turnstileSiteKey:env.TURNSTILE_SITE_KEY||'',
     enquiryFormReady,
     socialLinks
-  }),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=300'}});
+  }),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 }
