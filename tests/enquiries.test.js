@@ -38,3 +38,22 @@ test('public configuration ignores unsafe social URLs', async () => {
   const data=await response.json();
   assert.deepEqual(data.socialLinks,[]);
 });
+
+import { onRequest as getSitemap } from '../functions/sitemap.xml.js';
+import { onRequest as getRobots } from '../functions/robots.txt.js';
+
+test('sitemap lists all thirteen planned routes using configured canonical origin', async () => {
+  const response=await getSitemap({request:new Request('https://preview.noctra-hours.pages.dev/sitemap.xml'),env:{PUBLIC_SITE_URL:'https://noctra-hours.pages.dev'}});
+  const xml=await response.text();
+  assert.equal(response.headers.get('content-type').includes('application/xml'),true);
+  assert.equal((xml.match(/<url>/g)||[]).length,13);
+  assert.equal(xml.includes('https://noctra-hours.pages.dev/services/web-development'),true);
+  assert.equal(xml.includes('preview.noctra-hours.pages.dev'),false);
+});
+
+test('robots file points crawlers to the configured sitemap', async () => {
+  const response=await getRobots({request:new Request('https://noctra-hours.pages.dev/robots.txt'),env:{PUBLIC_SITE_URL:'https://noctra-hours.pages.dev'}});
+  const body=await response.text();
+  assert.equal(body.includes('Disallow: /api/'),true);
+  assert.equal(body.includes('Sitemap: https://noctra-hours.pages.dev/sitemap.xml'),true);
+});
