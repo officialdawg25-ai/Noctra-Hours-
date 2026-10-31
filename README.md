@@ -15,7 +15,7 @@ For local Pages Functions development, copy `.dev.vars.example` to `.dev.vars`, 
 
 ## Deployment
 
-Cloudflare Pages is connected to this GitHub repository.
+Cloudflare Pages is connected to this GitHub repository. The Cloudflare dashboard is the source of truth for production and preview environment variables; this repository intentionally has no Wrangler configuration file, so deployments do not overwrite dashboard-managed settings.
 
 - Production branch: `main`
 - Build command: `npm install && npm test && npm run build`
