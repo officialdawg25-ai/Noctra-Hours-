@@ -6,7 +6,8 @@ const safeEmail = value => {
   return email.length<=254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)?email:'';
 };
 export async function onRequestGet({request,env}) {
-  const configuredSiteUrl=safeUrl(env.PUBLIC_SITE_URL);\n  const siteUrl=configuredSiteUrl?new URL(configuredSiteUrl).origin:new URL(request.url).origin;
+  const configuredSiteUrl=safeUrl(env.PUBLIC_SITE_URL);
+  const siteUrl=configuredSiteUrl?new URL(configuredSiteUrl).origin:new URL(request.url).origin;
   const whatsappNumber=String(env.WHATSAPP_NUMBER||'').replace(/[^0-9]/g,'');
   const socialLinks=[
     ['Instagram',env.SOCIAL_INSTAGRAM_URL],
