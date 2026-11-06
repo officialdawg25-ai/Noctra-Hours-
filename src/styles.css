@@ -210,3 +210,34 @@
 @media(max-width:850px){.hero-cinematic{min-height:calc(100svh - 78px);padding:100px max(5vw,22px) 25px}.hero-cinematic-copy{width:min(76%,650px)}.hero-cinematic h1{font-size:clamp(48px,8.5vw,76px)}.hero-hands{width:105vw;right:-28%;opacity:.62}.hero-scene-orbits{inset:5% -15% 10% 30%}.hero-scene-coordinate{top:9%;right:5%;font-size:7px}.hero-scene-caption{right:5%;bottom:13%}.hero-cinematic .hero-meta{margin-top:42px}}
 @media(max-width:560px){.hero-cinematic{min-height:calc(100svh - 78px);padding:95px 22px 22px;justify-content:center}.hero-cinematic-copy{width:100%;max-width:420px}.hero-cinematic .eyebrow{font-size:7px;letter-spacing:.7px;gap:7px}.hero-cinematic .eyebrow>span{width:15px}.hero-cinematic h1{font-size:clamp(44px,11.8vw,60px);letter-spacing:-2.8px;line-height:1.02;margin:27px 0 19px;max-width:390px}.hero-cinematic-copy>p{font-size:12px;line-height:1.8;max-width:300px}.hero-cinematic .hero-actions{flex-wrap:wrap;gap:18px;margin-top:26px}.hero-cinematic .button{padding:14px 16px;font-size:11px}.hero-cinematic .text-link{font-size:10px}.hero-cinematic .hero-meta{font-size:6px;letter-spacing:.5px;margin-top:36px}.hero-hands{width:150vw;height:88%;right:-64%;top:6%;opacity:.48}.hero-scene-grid{background-size:34px 34px;opacity:.6}.hero-scene-orbits{inset:8% -45% 15% 15%;opacity:.35}.hero-scene-orbits i{width:75vw}.hero-scene-orbits i:nth-child(2){width:60vw}.hero-scene-orbits i:nth-child(3){width:40vw}.hero-scene-coordinate{top:7%;right:6%;font-size:6px;gap:10px}.hero-scene-caption{bottom:18%;right:5%;font-size:6px;letter-spacing:.7px}.hero-cinematic-foot{font-size:6px;letter-spacing:.45px;gap:10px;padding-top:12px}.hero-cinematic-foot span:first-child{max-width:120px}.hero-cinematic-foot span:nth-child(2){display:none}.hero-cinematic-foot span:last-child{margin-left:auto;white-space:nowrap}}
 @media(prefers-reduced-motion:reduce){.hero-hand-drawing{stroke-dashoffset:0;animation:none;opacity:.75}.hero-hand-light,.hero-hand-nexus,.hero-scanline{animation:none}.hero-scanline{display:none}}
+
+/* HERO REFINEMENT — cinematic wireframe hand study */
+.hero-cinematic{background:#020203}
+.hero-cinematic:before{background:radial-gradient(ellipse at 68% 47%,rgba(210,215,225,.095),transparent 43%),linear-gradient(90deg,#020203 0%,rgba(2,2,3,.97) 28%,rgba(2,2,3,.68) 58%,rgba(2,2,3,.2) 100%),linear-gradient(180deg,#020203 0%,#050506 68%,#020203 100%)}
+.hero-scene:after{content:"";position:absolute;inset:4.5% 3.5%;border:1px solid rgba(225,229,236,.075);background:linear-gradient(90deg,transparent 0%,rgba(225,229,236,.025) 50%,transparent 100%);pointer-events:none}
+.hero-scene-grid{background-size:clamp(42px,5.2vw,78px) clamp(42px,5.2vw,78px);opacity:.34;mask-image:linear-gradient(90deg,transparent 0%,black 24%,black 90%,transparent 100%)}
+.hero-scene-orbits{opacity:.28;animation:hero-orbit-breathe 24s ease-in-out infinite alternate}
+.hero-scene-orbits i{border-color:rgba(220,224,232,.13)}
+.hero-hands{width:min(91vw,1360px);right:-7%;opacity:.72;filter:drop-shadow(0 0 11px rgba(230,234,240,.12));mix-blend-mode:screen}
+.hero-hand-drawing{stroke:rgba(230,234,241,.6);stroke-dasharray:2400;stroke-dashoffset:2400;animation:hero-hand-draw 8.5s cubic-bezier(.45,0,.2,1) forwards,hero-hand-breathe 10s ease-in-out 8.5s infinite alternate}
+.hero-hand-drawing .hand-outline{stroke:rgba(245,246,248,.72);stroke-width:1.15}
+.hero-hand-upper{animation-delay:.35s,8.85s}
+.hero-hand-lower{animation-delay:1.7s,10.2s}
+.hero-hand-fine{stroke:rgba(205,212,224,.17);stroke-width:.65;animation-delay:2.5s,11s}
+.hero-hand-light{opacity:.42}
+.hero-hand-nexus{opacity:.72;filter:drop-shadow(0 0 4px rgba(255,255,255,.55))}
+.hero-scanline{opacity:.22;background-size:100% 300px;animation-duration:18s}
+.hero-scene-coordinate,.hero-scene-caption{color:rgba(225,228,235,.36);letter-spacing:1.2px}
+.hero-cinematic-copy{width:min(56%,720px)}
+.hero-cinematic h1{font-weight:500;letter-spacing:clamp(-6.5px,-.55vw,-2px);text-shadow:0 2px 30px rgba(0,0,0,.35)}
+.hero-cinematic h1 em{color:rgba(236,238,242,.62)}
+.hero-cinematic-copy>p{color:rgba(222,225,232,.66);max-width:430px}
+.hero-cinematic .button{box-shadow:0 0 0 1px rgba(255,255,255,.04);transition:transform .35s ease,background .35s ease}
+.hero-cinematic .button:hover{transform:translateY(-2px)}
+.hero-cinematic .text-link{transition:color .3s,border-color .3s}
+.hero-cinematic .text-link:hover{color:#fff;border-color:rgba(255,255,255,.75)}
+.hero-cinematic-foot{border-color:rgba(230,232,238,.11)}
+@keyframes hero-orbit-breathe{from{transform:rotate(-3deg) scale(.98)}to{transform:rotate(3deg) scale(1.02)}}
+@media(max-width:850px){.hero-cinematic-copy{width:min(80%,660px)}.hero-hands{width:115vw;right:-34%;opacity:.54}.hero-scene-orbits{opacity:.2}}
+@media(max-width:560px){.hero-cinematic:before{background:radial-gradient(ellipse at 82% 42%,rgba(210,215,225,.08),transparent 48%),linear-gradient(90deg,rgba(2,2,3,.9),rgba(2,2,3,.48)),linear-gradient(180deg,#020203 0%,rgba(2,2,3,.72) 60%,#020203 100%)}.hero-scene:after{inset:3% 4%;border-color:rgba(225,229,236,.055)}.hero-cinematic-copy{width:100%}.hero-hands{width:160vw;right:-78%;opacity:.4;mix-blend-mode:screen}.hero-scene-grid{opacity:.24}.hero-scene-orbits{opacity:.15}.hero-cinematic h1{text-shadow:0 3px 28px rgba(0,0,0,.65)}}
+@media(prefers-reduced-motion:reduce){.hero-scene-orbits{animation:none}.hero-cinematic .button{transition:none}.hero-cinematic .button:hover{transform:none}}
