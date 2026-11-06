@@ -72,3 +72,35 @@
 .thinking-section .thinking-headline>span{color:var(--thinking-ink)}
 .thinking-section .thinking-headline>.thinking-muted{color:#858c9a}
 .thinking-section .thinking-headline .thinking-period{color:var(--blue)}
+
+
+/* Noctra Hours — cinematic, sequential Thinking experience */
+.thinking-cinema{background:#030304;color:#f7f7f8;min-height:0;padding:30px clamp(22px,5vw,76px) 26px;display:flex;flex-direction:column;position:relative;isolation:isolate;overflow:hidden;border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.1)}
+.thinking-cinema:before{content:'';position:absolute;inset:0;z-index:-2;background:radial-gradient(ellipse at 50% 54%,rgba(46,49,57,.24),transparent 56%),#030304}
+.thinking-cinema .thinking-masthead{flex-shrink:0;border-bottom-color:rgba(255,255,255,.18);color:#d9d9dc;padding-bottom:20px}
+.thinking-cinema-topline{display:flex;justify-content:space-between;gap:16px;padding-top:22px;font:9px 'JetBrains Mono';letter-spacing:1.1px;color:rgba(240,240,243,.55)}
+.thinking-cinema-stage{position:relative;flex:1;min-height:clamp(490px,68svh,760px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden}
+.thinking-cinema-orbit{position:absolute;inset:auto -8% 4%;height:clamp(140px,25vw,300px);z-index:0;opacity:.82;pointer-events:none;mask-image:linear-gradient(to bottom,transparent 0%,black 20%,black 72%,transparent 100%)}
+.thinking-cinema-orbit svg{width:100%;height:100%;overflow:visible}
+.thinking-cinema-orbit path{fill:none;stroke:rgba(205,211,222,.35);stroke-width:1.1;vector-effect:non-scaling-stroke;animation:thinking-wave-drift 13s ease-in-out infinite alternate}
+.thinking-cinema-orbit path:nth-child(2n){stroke:rgba(205,211,222,.21);animation-duration:17s;animation-direction:alternate-reverse}
+.thinking-cinema-orbit path:nth-child(3n){stroke:rgba(205,211,222,.13);animation-duration:20s}
+.thinking-cinema-content{position:relative;z-index:1;width:min(100%,1120px);padding:55px 0 150px;animation:thinking-cinematic-in 1.05s cubic-bezier(.16,.75,.22,1) both}
+.thinking-cinema-eyebrow{display:block;font:9px 'JetBrains Mono';letter-spacing:1.7px;text-transform:uppercase;color:rgba(236,237,240,.62);margin:0 auto 30px}
+.thinking-cinema-title{font:500 clamp(46px,8.2vw,112px)/.99 'Space Grotesk';letter-spacing:clamp(-5px,-.5vw,-1.8px);color:#f5f5f7;margin:0 auto;max-width:1100px;text-wrap:balance}
+.thinking-cinema-title-opening{font-size:clamp(54px,9vw,128px);max-width:1120px;letter-spacing:clamp(-7px,-.6vw,-2px)}
+.thinking-cinema-body{max-width:640px;margin:30px auto 0;color:rgba(222,224,229,.72);font:400 clamp(14px,1.35vw,17px)/1.85 'Space Grotesk';text-wrap:pretty}
+.thinking-cinema-controls{position:absolute;z-index:2;left:0;right:0;bottom:28px;display:flex;align-items:center;justify-content:center;gap:22px}
+.thinking-cinema-progress{display:flex;align-items:center;gap:7px;width:min(270px,70vw)}
+.thinking-cinema-progress button{appearance:none;border:0;background:rgba(255,255,255,.2);height:2px;flex:1;padding:10px 0;cursor:pointer;position:relative;background-clip:content-box}
+.thinking-cinema-progress button span{display:block;position:absolute;top:10px;left:0;height:2px;width:0;background:#f4f4f6;transition:width .35s ease}
+.thinking-cinema-progress button.active span{width:100%}
+.thinking-cinema-progress button:focus-visible{outline:1px solid white;outline-offset:3px}
+.thinking-cinema-count{font:9px 'JetBrains Mono';letter-spacing:1px;color:rgba(242,243,245,.55);white-space:nowrap}
+.thinking-cinema-count i{font-style:normal;color:rgba(242,243,245,.25);padding:0 4px}
+.thinking-cinema .thinking-signature{flex-shrink:0;border-top-color:rgba(255,255,255,.16);padding-top:16px;color:rgba(220,222,226,.48)}
+@keyframes thinking-cinematic-in{0%{opacity:0;filter:blur(8px);transform:translateY(24px) scale(.985)}65%{filter:blur(0)}100%{opacity:1;filter:blur(0);transform:translateY(0) scale(1)}}
+@keyframes thinking-wave-drift{from{transform:translate3d(-1.5%,4px,0)}to{transform:translate3d(1.5%,-5px,0)}}
+@media(max-width:760px){.thinking-cinema{padding:22px 21px 22px}.thinking-cinema .thinking-masthead{font-size:8px;padding-bottom:17px}.thinking-cinema-topline{font-size:7px;letter-spacing:.7px;padding-top:18px}.thinking-cinema-stage{min-height:clamp(490px,70svh,680px)}.thinking-cinema-content{padding:35px 0 125px;width:100%}.thinking-cinema-eyebrow{font-size:8px;letter-spacing:1.2px;margin-bottom:24px}.thinking-cinema-title,.thinking-cinema-title-opening{font-size:clamp(42px,11.7vw,66px);letter-spacing:-2.8px;line-height:1.02}.thinking-cinema-body{font-size:13px;line-height:1.8;margin-top:23px;max-width:330px}.thinking-cinema-orbit{height:180px;inset:auto -18% 9%;opacity:.7}.thinking-cinema-controls{bottom:22px;gap:15px}.thinking-cinema-progress{width:min(220px,65vw);gap:4px}.thinking-cinema .thinking-signature{font-size:7px;letter-spacing:.65px}.thinking-cinema .thinking-signature-mark{font-size:7px}}
+@media(max-width:380px){.thinking-cinema-title,.thinking-cinema-title-opening{font-size:clamp(39px,10.8vw,44px);letter-spacing:-2.1px}.thinking-cinema-topline{gap:9px}}
+@media(prefers-reduced-motion:reduce){.thinking-cinema-content{animation:none!important}.thinking-cinema-orbit path{animation:none!important}.thinking-cinema-progress button span{transition:none}}
