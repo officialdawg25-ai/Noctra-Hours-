@@ -244,3 +244,23 @@
 @keyframes noctra-wave-drift{0%{transform:translate3d(-1.4%,2px,0)}50%{transform:translate3d(.5%,-4px,0)}100%{transform:translate3d(1.4%,3px,0)}}
 @media(max-width:760px){.thinking-cinema-orbit{inset:auto -12% 8%;height:clamp(150px,36vw,205px);opacity:.64}.thinking-cinema-stage{min-height:clamp(470px,66svh,640px)}.thinking-cinema-content{padding-bottom:118px}}
 @media(prefers-reduced-motion:reduce){.thinking-cinema-orbit path{animation:none!important}.thinking-cinema-orbit animate{display:none!important}}
+
+/* Corrective source-art integration: hero displays the hand paths extracted from the supplied SVG itself */
+.hero-cinematic .hero-meta,.hero-cinematic-foot,.hero-scene-coordinate,.hero-scene-caption,.thinking-masthead,.thinking-cinema-topline,.thinking-signature{display:none!important}
+.hero-cinematic{padding-bottom:clamp(28px,4vh,48px)}
+.hero-scene-grid{opacity:.22;mask-image:linear-gradient(90deg,transparent 0%,black 22%,black 88%,transparent 100%)}
+.hero-hands-reveal{position:absolute;width:min(70vw,860px);height:auto;aspect-ratio:315/190;right:-2%;top:12%;overflow:visible;opacity:.68;filter:none}
+.hero-hands-image{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;opacity:1;clip-path:none;animation:none;filter:none}
+@media(max-width:850px){.hero-hands-reveal{width:105vw;right:-26%;top:15%;opacity:.58}}
+@media(max-width:560px){.hero-hands-reveal{width:118vw;right:-30%;top:18%;opacity:.48}.hero-hands-image{object-fit:contain}}
+/* Remove the detached metadata rails and dividers in the annotated transition areas */
+.thinking-cinema{border-top:0;border-bottom:0;padding:clamp(42px,6vw,74px) max(5vw,22px) 26px}
+.thinking-cinema-stage{min-height:clamp(430px,58svh,650px)}
+.thinking-cinema-orbit{position:absolute;inset:auto -4% 0;height:clamp(180px,27vw,310px);z-index:0;opacity:.86;pointer-events:none;mask-image:linear-gradient(to bottom,transparent 0%,black 13%,black 84%,transparent 100%)}
+.thinking-cinema-orbit img{display:block;width:100%;height:100%;object-fit:fill;object-position:center;opacity:1}
+.thinking-cinema-content{padding:45px 0 145px}
+.thinking-cinema-controls{bottom:24px}
+.thinking-cinema-progress{width:min(230px,62vw)}
+.thinking-cinema-count{display:none!important}
+@media(max-width:760px){.thinking-cinema{padding:36px 21px 22px}.thinking-cinema-stage{min-height:clamp(430px,60svh,570px)}.thinking-cinema-orbit{inset:auto -12% 4%;height:clamp(150px,38vw,205px);opacity:.72}.thinking-cinema-content{padding:30px 0 118px}.thinking-cinema-controls{bottom:18px}.thinking-cinema-progress{width:min(200px,62vw)}}
+@media(prefers-reduced-motion:reduce){.thinking-cinema-orbit img{animation:none!important;transform:none!important}.hero-hands-image{animation:none!important}}
