@@ -6,3 +6,69 @@
 .honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important;}
 
 .skip-link{position:absolute;left:16px;top:-100px;z-index:1000;padding:12px 16px;background:#f2f3f5;color:#101114}.skip-link:focus{top:12px}
+
+/* Noctra Hours — The Thinking editorial section */
+.thinking-section{display:block;position:relative;isolation:isolate;overflow:hidden;border-top:1px solid var(--line);padding-top:34px;padding-bottom:34px;--thinking-ink:#f2f3f5;--thinking-dim:#858c9a;--thinking-rule:rgba(242,243,245,.14)}
+.thinking-masthead,.thinking-section-label,.thinking-signature,.thinking-principles-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;font:9px 'JetBrains Mono';letter-spacing:1.1px;color:#929aa7}
+.thinking-masthead{padding-bottom:22px;border-bottom:1px solid var(--thinking-rule);color:#d4d7de}
+.thinking-masthead sup{font-size:7px;margin-left:2px;color:var(--blue)}
+.thinking-section-label{padding-top:24px;padding-bottom:22px}
+.thinking-section-label span:first-child{color:#c6cad2}
+.thinking-composition{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(320px,.78fr);gap:clamp(40px,7vw,110px);position:relative;z-index:1;padding:42px 0 74px}
+.thinking-headline-wrap{position:relative;min-width:0}
+.thinking-kicker,.thinking-overline{font:9px 'JetBrains Mono';letter-spacing:1.15px;color:#929aa7}
+.thinking-kicker{margin:0 0 28px}
+.thinking-headline{font:500 clamp(56px,7.15vw,100px)/.98 'Space Grotesk';letter-spacing:clamp(-5px,-.45vw,-2px);margin:0;max-width:850px;overflow-wrap:normal}
+.thinking-headline>span{display:block;white-space:nowrap}
+.thinking-muted{color:#858c9a}
+.thinking-last-line{padding-bottom:.16em;position:relative;width:max-content;max-width:100%}
+.thinking-period{color:var(--blue)}
+.thinking-last-line:after{content:'';position:absolute;left:0;bottom:0;width:64%;height:1px;background:linear-gradient(90deg,rgba(139,184,255,.75),rgba(139,184,255,0));transform:scaleX(0);transform-origin:left;transition:transform .75s cubic-bezier(.2,.7,.2,1)}
+.thinking-section.is-visible .thinking-last-line:after{transform:scaleX(1)}
+.thinking-copy-column{min-width:0;padding-top:26px}
+.thinking-perspective{max-width:490px}
+.thinking-lead{font:500 clamp(19px,1.65vw,23px)/1.48 'Space Grotesk';letter-spacing:-.35px;color:#e5e7ec;margin:20px 0 16px}
+.thinking-perspective>p:not(.thinking-lead){font-size:13px;line-height:1.85;color:#a4abb7;margin:0 0 13px}
+.thinking-principles{margin-top:52px}
+.thinking-principles-heading{padding-bottom:16px;border-bottom:1px solid var(--thinking-rule)}
+.thinking-principles-index{color:#697383;font-size:8px}
+.thinking-principle{padding:20px 0 18px;border-bottom:1px solid var(--thinking-rule);transition:padding-left .25s ease,border-color .25s ease}
+.thinking-principle-top{display:grid;grid-template-columns:32px minmax(0,1fr) 18px;align-items:center;gap:12px}
+.thinking-principle-number{font:9px 'JetBrains Mono';color:#8c95a4;transition:color .25s ease}
+.thinking-principle h3{font:500 clamp(17px,1.6vw,21px)/1.25 'Space Grotesk';letter-spacing:-.35px;margin:0;color:#e8eaf0;transition:color .25s ease}
+.thinking-principle-arrow{font-size:14px;color:#717b8a;opacity:.55;transform:translate(-2px,2px);transition:opacity .25s ease,transform .25s ease,color .25s ease}
+.thinking-principle>p{font-size:12px;line-height:1.75;color:#969eab;margin:10px 0 0 44px;max-width:390px}
+.thinking-principle:hover,.thinking-principle:focus-within{padding-left:4px;border-bottom-color:rgba(242,243,245,.28)}
+.thinking-principle:hover h3,.thinking-principle:focus-within h3{color:#fff}
+.thinking-principle:hover .thinking-principle-number,.thinking-principle:focus-within .thinking-principle-number{color:var(--blue)}
+.thinking-principle:hover .thinking-principle-arrow,.thinking-principle:focus-within .thinking-principle-arrow{opacity:1;transform:translate(0,0);color:var(--blue)}
+.thinking-grid-art{position:absolute;z-index:0;pointer-events:none;top:18%;left:0;width:58%;height:62%;opacity:.38;mask-image:radial-gradient(ellipse at 48% 45%,black 0%,transparent 74%)}
+.thinking-grid-art:before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(135,150,175,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(135,150,175,.12) 1px,transparent 1px);background-size:42px 42px}
+.thinking-grid-line{position:absolute;background:rgba(139,184,255,.22)}
+.thinking-grid-line-a{left:24%;top:0;bottom:0;width:1px}
+.thinking-grid-line-b{left:0;right:0;top:48%;height:1px}
+.thinking-grid-line-c{left:72%;top:0;bottom:0;width:1px;background:rgba(242,243,245,.13)}
+.thinking-grid-sweep{position:absolute;top:0;bottom:0;left:12%;width:1px;background:linear-gradient(transparent,rgba(139,184,255,.36),transparent);animation:thinking-grid-drift 17s ease-in-out infinite alternate}
+.thinking-signature{border-top:1px solid var(--thinking-rule);padding-top:18px;color:#7f8794}
+.thinking-signature-mark{font-size:8px;color:#667080}
+.thinking-section .thinking-masthead,.thinking-section .thinking-section-label,.thinking-section .thinking-headline-wrap,.thinking-section .thinking-copy-column,.thinking-section .thinking-signature{opacity:1;transform:none}
+.thinking-section:not(.is-visible) .thinking-section-label,.thinking-section:not(.is-visible) .thinking-headline-wrap,.thinking-section:not(.is-visible) .thinking-copy-column,.thinking-section:not(.is-visible) .thinking-signature{opacity:0;transform:translateY(12px)}
+.thinking-section.is-visible .thinking-section-label{animation:thinking-reveal .45s ease-out both}
+.thinking-section.is-visible .thinking-headline-wrap{animation:thinking-reveal .72s cubic-bezier(.2,.7,.2,1) .08s both}
+.thinking-section.is-visible .thinking-copy-column{animation:thinking-reveal .55s ease-out .18s both}
+.thinking-section.is-visible .thinking-signature{animation:thinking-reveal .5s ease-out .28s both}
+.thinking-section.is-visible .thinking-principle{animation:thinking-reveal .42s ease-out both}
+.thinking-section.is-visible .thinking-principle:nth-of-type(2){animation-delay:.12s}
+.thinking-section.is-visible .thinking-principle:nth-of-type(3){animation-delay:.2s}
+.thinking-section.is-visible .thinking-principle:nth-of-type(4){animation-delay:.28s}
+@keyframes thinking-reveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes thinking-grid-drift{from{transform:translateX(0);opacity:.35}to{transform:translateX(58%);opacity:.8}}
+@media(max-width:1000px){.thinking-composition{grid-template-columns:minmax(0,1fr) minmax(280px,.82fr);gap:40px}.thinking-headline{font-size:clamp(52px,6.6vw,76px);letter-spacing:-3.5px}.thinking-copy-column{padding-top:18px}.thinking-principles{margin-top:38px}}
+@media(max-width:760px){.thinking-section{padding-top:25px;padding-bottom:25px}.thinking-masthead,.thinking-section-label{font-size:8px;letter-spacing:.8px}.thinking-section-label{align-items:flex-start;flex-direction:column;gap:9px;padding-top:20px;padding-bottom:14px}.thinking-composition{display:flex;flex-direction:column;gap:34px;padding:30px 0 44px}.thinking-kicker{font-size:8px;margin-bottom:22px}.thinking-headline{font-size:clamp(44px,11.4vw,64px);letter-spacing:-2.8px;line-height:1.02}.thinking-headline>span{white-space:normal}.thinking-last-line{padding-bottom:.22em}.thinking-copy-column{padding-top:0}.thinking-perspective{max-width:100%}.thinking-lead{font-size:20px;margin-top:17px}.thinking-perspective>p:not(.thinking-lead){font-size:13px}.thinking-principles{margin-top:38px}.thinking-principle{padding:18px 0 16px}.thinking-principle h3{font-size:18px}.thinking-principle>p{margin-left:44px;font-size:12px}.thinking-grid-art{top:10%;width:100%;height:38%;opacity:.28}.thinking-signature{font-size:7px;letter-spacing:.65px}.thinking-signature-mark{font-size:7px}}
+@media(max-width:380px){.thinking-headline{font-size:clamp(40px,10.8vw,46px);letter-spacing:-2.2px}.thinking-masthead{gap:12px}.thinking-principle-top{grid-template-columns:25px minmax(0,1fr) 14px;gap:9px}.thinking-principle>p{margin-left:34px}}
+@media(prefers-reduced-motion:reduce){.thinking-section:not(.is-visible) .thinking-section-label,.thinking-section:not(.is-visible) .thinking-headline-wrap,.thinking-section:not(.is-visible) .thinking-copy-column,.thinking-section:not(.is-visible) .thinking-signature{opacity:1;transform:none}.thinking-section.is-visible .thinking-section-label,.thinking-section.is-visible .thinking-headline-wrap,.thinking-section.is-visible .thinking-copy-column,.thinking-section.is-visible .thinking-signature,.thinking-section.is-visible .thinking-principle{animation:none!important}.thinking-grid-sweep{animation:none}.thinking-last-line:after{transform:scaleX(1);transition:none}}
+
+/* Preserve the intended headline hierarchy over the homepage's shared accent-span rule. */
+.thinking-section .thinking-headline>span{color:var(--thinking-ink)}
+.thinking-section .thinking-headline>.thinking-muted{color:#858c9a}
+.thinking-section .thinking-headline .thinking-period{color:var(--blue)}
