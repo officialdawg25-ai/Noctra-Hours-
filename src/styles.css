@@ -264,3 +264,6 @@
 .thinking-cinema-count{display:none!important}
 @media(max-width:760px){.thinking-cinema{padding:36px 21px 22px}.thinking-cinema-stage{min-height:clamp(430px,60svh,570px)}.thinking-cinema-orbit{inset:auto -12% 4%;height:clamp(150px,38vw,205px);opacity:.72}.thinking-cinema-content{padding:30px 0 118px}.thinking-cinema-controls{bottom:18px}.thinking-cinema-progress{width:min(200px,62vw)}}
 @media(prefers-reduced-motion:reduce){.thinking-cinema-orbit img{animation:none!important;transform:none!important}.hero-hands-image{animation:none!important}}
+
+/* Official Noctra Hours logo integration */
+.brand-logo{display:block;width:36px;height:36px;object-fit:contain;flex:0 0 auto;border-radius:4px}.brand{align-items:center;gap:12px}
