@@ -97,3 +97,12 @@ Public email and WhatsApp details are read from `CONTACT_EMAIL` and `WHATSAPP_NU
 7. Review the privacy notice, retention schedule and commercial terms with appropriate South African professional advice before public launch.
 
 No customer contact details, testimonials, client commissions, certifications, awards or performance statistics are invented. Portfolio concept studies are explicitly labelled as concepts.
+
+
+## Administration portal
+
+The Noctra Hours administration portal is available at \`/admin\`. It uses the existing Supabase Auth identity system, PostgreSQL database and Cloudflare Pages Functions. It provides CMS management, content publication and revision restore, enquiries, media, users and permissions, redirects, audit history, settings and integration health checks.
+
+Read [the operator setup guide](docs/ADMIN-PLATFORM-SETUP.md) before activating the portal. Production activation requires the server-side Supabase service-role key, Supabase Auth key, administrator session encryption secret and one-time bootstrap configuration in Cloudflare Pages. Never commit or expose those credentials.
+
+The public website reads approved published CMS data through \`/api/public-content\`; draft and unpublished records remain private. Public rendering currently supports industries, services, capabilities, ventures, projects, verified testimonials, navigation, custom pages and approved website settings.

@@ -61,3 +61,31 @@
 .nh-media-upload{margin-bottom:18px}.nh-media-form{display:grid;grid-template-columns:1.2fr 1fr 1fr 150px auto;gap:12px;align-items:end}.nh-media-form .nh-field{margin:0}.nh-media-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.nh-media-card{background:#fff;border:1px solid #e2e4e8;min-width:0}.nh-media-preview{height:170px;background:#e9ecef;display:grid;place-items:center;overflow:hidden}.nh-media-preview img{width:100%;height:100%;object-fit:cover}.nh-media-meta{padding:14px}.nh-media-meta>strong{font-size:12px;font-weight:500;display:block;overflow-wrap:anywhere}.nh-media-meta>small{font-size:9px;color:#8a919b;display:block;margin:5px 0 15px}.nh-media-meta .nh-field{margin-bottom:12px}.nh-media-actions{display:flex;gap:8px;justify-content:space-between;border-top:1px solid #eceef0;padding-top:12px}
 @media(max-width:1100px){.nh-media-form{grid-template-columns:1fr 1fr}.nh-media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.nh-media-form{grid-template-columns:1fr}.nh-media-grid{grid-template-columns:1fr}.nh-media-preview{height:190px}}
+
+.nh-content-actions{display:flex;align-items:center;gap:7px}
+.nh-role-create{margin-top:22px}
+.nh-role-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.nh-permission-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px;margin:18px 0 20px;padding:16px 0;border-top:1px solid var(--nh-line);border-bottom:1px solid var(--nh-line)}
+.nh-permission-grid label{display:flex;align-items:center;gap:8px;font-size:10px;color:#535b66}
+.nh-permission-grid input{accent-color:#17191d}
+.nh-history-modal{max-width:760px}
+.nh-history-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 0;border-top:1px solid var(--nh-line)}
+.nh-history-row strong,.nh-history-row small{display:block}
+.nh-history-row strong{font-size:12px;font-weight:600}
+.nh-history-row small{font-size:9px;color:#747b86;margin-top:5px}
+@media(max-width:760px){.nh-role-fields{grid-template-columns:1fr}.nh-permission-grid{grid-template-columns:1fr 1fr}.nh-content-actions{flex-wrap:wrap}}
+@media(max-width:480px){.nh-history-row{align-items:flex-start;flex-direction:column}}
+
+.nh-redirect-row{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.nh-redirect-row>div{min-width:0}.nh-redirect-row small{overflow-wrap:anywhere}
+.nh-integration-list{display:grid;gap:0}
+.nh-integration-row{display:grid;grid-template-columns:minmax(180px,1fr) auto minmax(200px,.9fr);align-items:center;gap:18px;padding:16px 0;border-top:1px solid var(--nh-line)}
+.nh-integration-row>div{min-width:0}.nh-integration-row strong,.nh-integration-row small{display:block}.nh-integration-row strong{font-size:12px}.nh-integration-row small{font-size:9px;line-height:1.6;color:#747b86;margin-top:4px}.nh-integration-note{font-size:10px;line-height:1.7;color:#747b86;margin-top:16px}
+@media(max-width:760px){.nh-integration-row{grid-template-columns:1fr auto;gap:8px}.nh-integration-row>small{grid-column:1/-1}}
+@media(max-width:640px){.nh-redirect-row{align-items:flex-start;flex-direction:column}}
+
+.nh-content-preview{max-width:780px}.nh-preview-summary{font-size:13px;line-height:1.8;color:#68717d;margin:0 0 22px}.nh-preview-body{border-top:1px solid var(--nh-line);padding-top:20px;font-size:12px;line-height:1.8;color:#333b45}.nh-preview-body img{display:block;max-width:100%;max-height:300px;object-fit:contain;margin:0 0 22px}.nh-preview-body blockquote{margin:0 0 22px;padding:18px 0;border-top:1px solid var(--nh-line);border-bottom:1px solid var(--nh-line);font-size:20px;line-height:1.5}.nh-preview-body h3{font-size:17px;margin:18px 0 8px}.nh-preview-body p{margin:8px 0}.nh-preview-body ul{padding-left:20px}
+
+.nh-enquiry-operations{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin:22px 0;padding:18px 0;border-top:1px solid var(--nh-line);border-bottom:1px solid var(--nh-line)}
+.nh-note-history{margin-top:22px}.nh-note-history article{padding:13px 0;border-top:1px solid var(--nh-line)}.nh-note-history article p{font-size:11px;line-height:1.7;color:#3c4550;margin:0 0 7px;white-space:pre-wrap}.nh-note-history article small{font-size:9px;color:#7d8590}
+@media(max-width:640px){.nh-enquiry-operations{grid-template-columns:1fr}}

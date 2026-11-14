@@ -298,6 +298,7 @@ export async function onRequest({request,env}) {
         const currentResult = await rest(env,'admin_content?select=*&id=eq.'+encodeURIComponent(body.id)+'&limit=1');
         const current = currentResult.data?.[0];
         if (!current || current.resource !== body.resource) return json({error:'Content record not found.'},404,responseHeaders);
+        if (current.status==='published' && !can(context,'content.publish')) return json({error:'Publishing permission is required to edit a live entry.'},403,responseHeaders);
         const latest = await rest(env,'admin_content_revisions?select=revision_number&content_id=eq.'+encodeURIComponent(body.id)+'&order=revision_number.desc&limit=1');
         const nextRevision = Number(latest.data?.[0]?.revision_number || 0) + 1;
         await rest(env,'admin_content_revisions','POST',{
@@ -333,6 +334,7 @@ export async function onRequest({request,env}) {
         const found = await rest(env,'admin_content?select=*&id=eq.'+encodeURIComponent(body.id)+'&limit=1');
         const current = found.data?.[0];
         if (!current || current.resource !== body.resource) return json({error:'Content record not found.'},404,responseHeaders);
+        if (operation === 'archive' && current.status==='published' && !can(context,'content.publish')) return json({error:'Publishing permission is required to archive a live entry.'},403,responseHeaders);
         if (operation === 'publish' && current.status !== 'approved') return json({error:'Content must be approved before publication.'},409,responseHeaders);
         const update = {status:statuses[operation],updated_by:context.user.id,updated_at:new Date().toISOString()};
         if (operation === 'publish') update.published_at = new Date().toISOString();
@@ -473,6 +475,63 @@ export async function onRequest({request,env}) {
       } catch { return json({error:'The media asset could not be safely deleted.'},500,responseHeaders); }
     }
 
+    if (action === 'restore-content') {
+      if (!can(context,'content.write')) return json({error:'You do not have permission to restore content.'},403,responseHeaders);
+      if (!body.revision_id) return json({error:'A revision identifier is required.'},400,responseHeaders);
+      try {
+        const revisionResult=await rest(env,'admin_content_revisions?select=*&id=eq.'+encodeURIComponent(body.revision_id)+'&limit=1');
+        const revision=revisionResult.data?.[0];
+        if (!revision || !RESOURCES.has(revision.resource)) return json({error:'Revision not found.'},404,responseHeaders);
+        const currentResult=await rest(env,'admin_content?select=*&id=eq.'+encodeURIComponent(revision.content_id)+'&limit=1');
+        const current=currentResult.data?.[0];
+        if (!current || current.resource!==revision.resource) return json({error:'The current content record no longer exists.'},404,responseHeaders);
+        const snapshot=revision.snapshot||{};
+        const nextStatus=snapshot.status||'draft';
+        if ((current.status==='published'||nextStatus==='published')&&!can(context,'content.publish')) return json({error:'Publishing permission is required to restore a published version.'},403,responseHeaders);
+        const latest=await rest(env,'admin_content_revisions?select=revision_number&content_id=eq.'+encodeURIComponent(current.id)+'&order=revision_number.desc&limit=1');
+        const nextRevision=Number(latest.data?.[0]?.revision_number||0)+1;
+        await rest(env,'admin_content_revisions','POST',{
+          content_id:current.id,resource:current.resource,revision_number:nextRevision,
+          snapshot:current,change_note:'Saved before restoring revision '+revision.revision_number,
+          created_by:context.user.id
+        },'return=minimal');
+        const patch={
+          title:snapshot.title,slug:snapshot.slug,summary:snapshot.summary||'',
+          status:nextStatus,sort_order:Number(snapshot.sort_order)||0,data:snapshot.data||{},
+          published_at:nextStatus==='published'?(snapshot.published_at||new Date().toISOString()):null,
+          updated_by:context.user.id,updated_at:new Date().toISOString()
+        };
+        const restored=await rest(env,'admin_content?id=eq.'+encodeURIComponent(current.id),'PATCH',patch,'return=representation');
+        await rest(env,'admin_publication_history','POST',{
+          content_id:current.id,resource:current.resource,action:'restored',
+          actor_id:context.user.id,revision_number:nextRevision,
+          details:{restored_revision:revision.revision_number}
+        },'return=minimal');
+        await audit(env,context.user,'content.restore',current.resource,current.id,current,patch,request);
+        return json({item:restored.data?.[0]?safeContent(restored.data[0]):null,revision_number:nextRevision},200,responseHeaders);
+      } catch { return json({error:'The selected content version could not be restored.'},500,responseHeaders); }
+    }
+
+    if (action === 'create-role') {
+      if (!can(context,'users.manage')) return json({error:'You do not have permission to create administrative roles.'},403,responseHeaders);
+      const name=String(body.name||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,50);
+      const description=String(body.description||'').trim().slice(0,300);
+      const requested=Array.isArray(body.permissions)?[...new Set(body.permissions.filter(x=>typeof x==='string'))]:[];
+      if (!/^[a-z][a-z0-9_]{1,49}$/.test(name)||!requested.length) return json({error:'Enter a valid role name and select at least one permission.'},400,responseHeaders);
+      if (['super_administrator','administrator','content_manager','business_manager'].includes(name)) return json({error:'That role name is reserved.'},409,responseHeaders);
+      try {
+        const available=await rest(env,'admin_permissions?select=id&id=in.('+requested.map(encodeURIComponent).join(',')+')');
+        const valid=(available.data||[]).map(row=>row.id);
+        if (valid.length!==requested.length) return json({error:'One or more selected permissions are invalid.'},400,responseHeaders);
+        const created=await rest(env,'admin_roles','POST',{name,description,is_system:false},'return=representation');
+        const role=created.data?.[0];
+        if (!role) return json({error:'The role could not be created. Check whether its name already exists.'},409,responseHeaders);
+        await rest(env,'admin_role_permissions','POST',valid.map(permission_id=>({role_id:role.id,permission_id})),'return=minimal');
+        await audit(env,context.user,'admin.role.create','admin_roles',role.id,null,{name,permissions:valid},request);
+        return json({role},201,responseHeaders);
+      } catch { return json({error:'The custom role could not be created.'},409,responseHeaders); }
+    }
+
     if (action === 'invite-user') {
       if (!can(context,'users.manage')) return json({error:'You do not have permission to invite administrators.'},403,responseHeaders);
       const email=String(body.email||'').trim().toLowerCase();
@@ -558,6 +617,31 @@ export async function onRequest({request,env}) {
       } catch { return json({error:'The redirect could not be created. Check for an existing source path.'},409,responseHeaders); }
     }
 
+    if (action === 'update-redirect') {
+      if (!can(context,'seo.manage')) return json({error:'You do not have permission to update redirects.'},403,responseHeaders);
+      if (!body.id) return json({error:'Redirect identifier is required.'},400,responseHeaders);
+      const patch={updated_by:context.user.id,updated_at:new Date().toISOString()};
+      if (Object.prototype.hasOwnProperty.call(body,'is_active')) patch.is_active=!!body.is_active;
+      if (body.destination_url!==undefined) {
+        const destination=String(body.destination_url||'').trim();
+        if (!(destination.startsWith('/')&&!destination.startsWith('//'))&&!/^https:\/\//i.test(destination)) return json({error:'Destination must be an internal path or HTTPS URL.'},400,responseHeaders);
+        if (destination.length>1000) return json({error:'Destination URL is too long.'},400,responseHeaders);
+        patch.destination_url=destination;
+      }
+      if (body.status_code!==undefined) {
+        const code=Number(body.status_code);
+        if (![301,302,307,308].includes(code)) return json({error:'Invalid redirect status code.'},400,responseHeaders);
+        patch.status_code=code;
+      }
+      try {
+        const previous=await rest(env,'admin_redirects?select=*&id=eq.'+encodeURIComponent(body.id)+'&limit=1');
+        if (!previous.data?.length) return json({error:'Redirect not found.'},404,responseHeaders);
+        const updated=await rest(env,'admin_redirects?id=eq.'+encodeURIComponent(body.id),'PATCH',patch,'return=representation');
+        await audit(env,context.user,'seo.redirect.update','admin_redirects',body.id,previous.data[0],updated.data?.[0]||patch,request);
+        return json({item:updated.data?.[0]||null},200,responseHeaders);
+      } catch { return json({error:'Redirect could not be updated.'},500,responseHeaders); }
+    }
+
     return json({error:'Unsupported administrative action.'},400,responseHeaders);
   }
 
@@ -631,9 +715,51 @@ export async function onRequest({request,env}) {
           roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} ))
         },200,headers);
       }
+      if (resource === 'enquiry-notes') {
+        if (!can(context,'enquiries.read')) return json({error:'Permission denied.'},403,headers);
+        const enquiryId=url.searchParams.get('enquiry_id')||'';
+        if (!/^[0-9a-f-]{36}$/i.test(enquiryId)) return json({error:'A valid enquiry identifier is required.'},400,headers);
+        const rows=await rest(env,'admin_enquiry_notes?select=id,enquiry_id,note,created_by,created_at&enquiry_id=eq.'+encodeURIComponent(enquiryId)+'&order=created_at.desc&limit=100');
+        return json({items:rows.data||[]},200,headers);
+      }
+      if (resource === 'team') {
+        if (!can(context,'enquiries.manage')) return json({error:'Permission denied.'},403,headers);
+        const members=await rest(env,'admin_members?select=user_id,display_name,active,role_id,admin_roles(name)&active=eq.true&order=display_name.asc');
+        return json({items:(members.data||[]).map(item=>({user_id:item.user_id,display_name:item.display_name||'Administrator',role:item.admin_roles?.name||''}))},200,headers);
+      }
+      if (resource === 'integrations') {
+        if (!can(context,'integrations.manage') && !can(context,'settings.manage')) return json({error:'Permission denied.'},403,headers);
+        const checks=[];
+        const add=(id,name,configured,status,description,detail)=>checks.push({id,name,configured,status,description,detail});
+        const hasDatabase=!!(baseUrl(env)&&serviceKey(env));
+        let databaseConnected=false;
+        if(hasDatabase){try{await rest(env,'admin_roles?select=id&limit=1');databaseConnected=true;}catch{}}
+        add('supabase_database','Supabase database',hasDatabase,databaseConnected?'connected':hasDatabase?'error':'missing','PostgreSQL and administrative CMS data',databaseConnected?'Database query succeeded.':hasDatabase?'Database query failed.':'SUPABASE_URL or service-role secret is missing.');
+        add('supabase_auth','Supabase Auth',!!anonKey(env),anonKey(env)?'configured':'missing','Administrator identity and session verification',anonKey(env)?'Publishable or anon key is present.':'SUPABASE_ANON_KEY is missing.');
+        let mediaConnected=false;
+        if(hasDatabase){try{const response=await fetch(baseUrl(env)+'/storage/v1/bucket/noctra-media',{headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env)}});mediaConnected=response.ok;}catch{}}
+        add('media_storage','Media storage',hasDatabase,mediaConnected?'connected':hasDatabase?'error':'missing','Noctra public media bucket',mediaConnected?'Media bucket is reachable.':'Media bucket is unavailable or credentials are missing.');
+        const emailReady=!!(env.RESEND_API_KEY&&env.FROM_EMAIL&&env.NOTIFICATION_EMAIL);
+        add('email_delivery','Email notifications',emailReady,emailReady?'configured':'missing','Enquiry notifications and administrator email delivery',emailReady?'Provider key and sender configuration are present.':'Configure RESEND_API_KEY, FROM_EMAIL and NOTIFICATION_EMAIL.');
+        const turnstileReady=!!(env.TURNSTILE_SITE_KEY&&env.TURNSTILE_SECRET_KEY&&env.TURNSTILE_ALLOWED_HOSTNAMES);
+        add('turnstile','Cloudflare Turnstile',turnstileReady,turnstileReady?'configured':'missing','Public form bot protection',turnstileReady?'Site key, secret and allowed hosts are present.':'One or more Turnstile settings are missing.');
+        const sessionReady=String(env.ADMIN_SESSION_SECRET||'').length>=32;
+        add('admin_session','Admin session encryption',sessionReady,sessionReady?'configured':'missing','Encrypted HttpOnly administrator sessions',sessionReady?'Session encryption secret meets the minimum length.':'Configure ADMIN_SESSION_SECRET with at least 32 random characters.');
+        const bootstrapReady=!!(env.ADMIN_BOOTSTRAP_EMAIL&&env.ADMIN_BOOTSTRAP_SECRET);
+        add('admin_bootstrap','Initial administrator bootstrap',bootstrapReady,bootstrapReady?'configured':'missing','One-time initial Super Administrator setup',bootstrapReady?'Bootstrap email and one-time secret are present.':'Configure ADMIN_BOOTSTRAP_EMAIL and ADMIN_BOOTSTRAP_SECRET, then remove the bootstrap secret after setup.');
+        add('public_origin','Public website origin',!!env.ALLOWED_ORIGIN,env.ALLOWED_ORIGIN?'configured':'missing','Same-origin protection for administrative actions',env.ALLOWED_ORIGIN||'ALLOWED_ORIGIN is missing.');
+        return json({items:checks},200,headers);
+      }
       if (resource === 'settings') {
         if (!can(context,'settings.manage')) return json({error:'Permission denied.'},403,headers);
         const rows=await rest(env,'admin_site_settings?select=key,value,updated_at&order=key.asc');
+        return json({items:rows.data||[]},200,headers);
+      }
+      if (resource === 'revisions') {
+        if (!can(context,'content.read')) return json({error:'Permission denied.'},403,headers);
+        const contentId=url.searchParams.get('content_id')||'';
+        if (!/^[0-9a-f-]{36}$/i.test(contentId)) return json({error:'A valid content identifier is required.'},400,headers);
+        const rows=await rest(env,'admin_content_revisions?select=id,content_id,resource,revision_number,change_note,created_by,created_at&content_id=eq.'+encodeURIComponent(contentId)+'&order=revision_number.desc&limit=100');
         return json({items:rows.data||[]},200,headers);
       }
       if (resource === 'audit') {
