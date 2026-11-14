@@ -300,11 +300,6 @@ export async function onRequest({request,env}) {
         if (!current || current.resource !== body.resource) return json({error:'Content record not found.'},404,responseHeaders);
         const latest = await rest(env,'admin_content_revisions?select=revision_number&content_id=eq.'+encodeURIComponent(body.id)+'&order=revision_number.desc&limit=1');
         const nextRevision = Number(latest.data?.[0]?.revision_number || 0) + 1;
-        await rest(env,'admin_content_revisions','POST',{
-          content_id:current.id,resource:current.resource,revision_number:nextRevision,
-          snapshot:current,change_note:String(body.change_note || 'Saved draft').slice(0,500),
-          created_by:context.user.id
-        },'return=minimal');
         const updated = await rest(env,'admin_content?id=eq.'+encodeURIComponent(body.id),'PATCH',{
           title:body.title.trim().slice(0,180),slug:body.slug,
           summary:String(body.summary || '').slice(0,1000),
@@ -313,6 +308,11 @@ export async function onRequest({request,env}) {
           status:'draft',published_at:null
         },'return=representation');
         const row = updated.data?.[0];
+        if (row) await rest(env,'admin_content_revisions','POST',{
+          content_id:current.id,resource:current.resource,revision_number:nextRevision,
+          snapshot:row,change_note:String(body.change_note || 'Saved draft').slice(0,500),
+          created_by:context.user.id
+        },'return=minimal');
         await audit(env,context.user,'content.update',body.resource,body.id,safeContent(current),safeContent(row || {}),request);
         return json({item:row?safeContent(row):null},200,responseHeaders);
       } catch {
@@ -347,12 +347,18 @@ export async function onRequest({request,env}) {
           status:'draft',published_at:null,updated_by:context.user.id,updated_at:new Date().toISOString()
         };
         const restored=await rest(env,'admin_content?id=eq.'+encodeURIComponent(body.id),'PATCH',patch,'return=representation');
+        const restoredRow=restored.data?.[0];
+        if (restoredRow) await rest(env,'admin_content_revisions','POST',{
+          content_id:current.id,resource:current.resource,revision_number:nextRevision+1,
+          snapshot:restoredRow,change_note:'Restored from revision '+body.revision_number,
+          created_by:context.user.id
+        },'return=minimal');
         await rest(env,'admin_publication_history','POST',{
           content_id:current.id,resource:current.resource,action:'restored',
           actor_id:context.user.id,revision_number:Number(body.revision_number),
-          details:{restored_revision:Number(body.revision_number),new_revision:nextRevision}
+          details:{restored_revision:Number(body.revision_number),new_revision:nextRevision+1}
         },'return=minimal');
-        await audit(env,context.user,'content.restore',body.resource,body.id,safeContent(current),safeContent(restored.data?.[0]||patch),request);
+        await audit(env,context.user,'content.restore',body.resource,body.id,safeContent(current),safeContent(restoredRow||patch),request);
         return json({item:restored.data?.[0]?safeContent(restored.data[0]):null},200,responseHeaders);
       } catch { return json({error:'The selected revision could not be restored.'},500,responseHeaders); }
     }
