@@ -116,6 +116,8 @@ function ContentModule({resource,items,onReload,permissions}) {
     } catch(err){setError(err.message);}
     finally{setSaving(false);}
   };
+  const preview=()=>{if(editing?.id)window.open('/admin/preview?id='+encodeURIComponent(editing.id),'_blank','noopener,noreferrer');};
+  const restore=async revision=>{if(!window.confirm('Restore revision '+revision.revision_number+'? The current draft will be saved as a new revision first.'))return;setError('');try{await post('restore-content',{resource,id:editing.id,revision_number:revision.revision_number});setEditing(null);setSuccess('Previous revision restored as a new draft.');await onReload();}catch(err){setError(err.message);}};
   const workflow=async(operation,item)=>{
     setError('');setSuccess('');
     try { await post('content-workflow',{operation,resource,id:item.id});setSuccess('Publication state updated.');await onReload(); }
@@ -148,11 +150,14 @@ function ContentModule({resource,items,onReload,permissions}) {
           <div className="nh-editor-actions"><button type="button" className="nh-outline" onClick={()=>setEditing(null)}>Cancel</button><button className="nh-primary" disabled={saving}>{saving?'Saving…':'Save draft'} <span>↗</span></button></div>
         </form>
         {editing.id&&<div className="nh-workflow"><span className="nh-overline">PUBLICATION WORKFLOW</span><div>
-          {permissions.includes('content.submit')&&<button className="nh-outline" onClick={()=>workflow('submit',editing)}>Submit for review</button>}
-          {permissions.includes('content.review')&&<button className="nh-outline" onClick={()=>workflow('approve',editing)}>Approve</button>}
-          {permissions.includes('content.publish')&&<button className="nh-outline" onClick={()=>workflow('publish',editing)}>Publish</button>}
-          {permissions.includes('content.publish')&&<button className="nh-outline" onClick={()=>workflow('unpublish',editing)}>Unpublish</button>}
-        </div></div>}
+          <button type="button" className="nh-outline" onClick={preview}>Preview ↗</button>
+          {permissions.includes('content.submit')&&<button type="button" className="nh-outline" onClick={()=>workflow('submit',editing)}>Submit for review</button>}
+          {permissions.includes('content.review')&&<button type="button" className="nh-outline" onClick={()=>workflow('approve',editing)}>Approve</button>}
+          {permissions.includes('content.publish')&&<button type="button" className="nh-outline" onClick={()=>workflow('publish',editing)}>Publish</button>}
+          {permissions.includes('content.publish')&&<button type="button" className="nh-outline" onClick={()=>workflow('unpublish',editing)}>Unpublish</button>}
+        </div>
+        <div className="nh-revision-list"><span className="nh-overline">VERSION HISTORY</span>{revisions.length?revisions.map(revision=><div key={revision.id}><span>v{revision.revision_number} · {date(revision.created_at)}<small>{revision.change_note||'Saved version'}</small></span><button type="button" className="nh-outline" onClick={()=>restore(revision)}>Restore</button></div>):<small>No saved revisions yet.</small>}</div>
+        </div>}
       </section>
     </div>}
   </div>;
