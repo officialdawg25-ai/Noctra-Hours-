@@ -123,6 +123,15 @@ async function loginRateAllowed(request, env) {
   const result=await rest(env,'rpc/consume_enquiry_rate_limit','POST',{p_key:key,p_window_seconds:60,p_max_requests:5});
   return result.data === true;
 }
+async function validImageSignature(file) {
+  const bytes=new Uint8Array(await file.slice(0,12).arrayBuffer());
+  const starts=(values)=>values.every((value,index)=>bytes[index]===value);
+  if (file.type==='image/jpeg') return starts([0xff,0xd8,0xff]);
+  if (file.type==='image/png') return starts([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]);
+  if (file.type==='image/gif') return starts([0x47,0x49,0x46,0x38]) && (bytes[4]===0x37 || bytes[4]===0x39) && bytes[5]===0x61;
+  if (file.type==='image/webp') return starts([0x52,0x49,0x46,0x46]) && bytes[8]===0x57 && bytes[9]===0x45 && bytes[10]===0x42 && bytes[11]===0x50;
+  return false;
+}
 async function exactCount(env, path) {
   const result=await rest(env,path,'GET',undefined,'count=exact');
   const range=result.headers.get('content-range') || '';
@@ -384,7 +393,7 @@ export async function onRequest({request,env}) {
       if (!can(context,'media.manage')) return json({error:'You do not have permission to upload media.'},403,responseHeaders);
       if (!uploadFile || typeof uploadFile.arrayBuffer!=='function') return json({error:'Choose an image to upload.'},400,responseHeaders);
       const allowedTypes=new Set(['image/jpeg','image/png','image/webp','image/gif']);
-      if (!allowedTypes.has(uploadFile.type) || uploadFile.size<=0 || uploadFile.size>12582912) return json({error:'Use a JPG, PNG, WebP or GIF image up to 12 MB.'},400,responseHeaders);
+      if (!allowedTypes.has(uploadFile.type) || uploadFile.size<=0 || uploadFile.size>12582912 || !(await validImageSignature(uploadFile))) return json({error:'Use a valid JPG, PNG, WebP or GIF image up to 12 MB.'},400,responseHeaders);
       const cleanName=String(uploadFile.name||'image').normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(-100)||'image';
       const objectPath=new Date().toISOString().slice(0,10)+'/'+crypto.randomUUID()+'-'+cleanName;
       try {
