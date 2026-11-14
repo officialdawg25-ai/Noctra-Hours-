@@ -97,6 +97,12 @@ function ContentModule({resource,items,onReload,permissions}) {
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState('');
   const [success,setSuccess]=useState('');
+  const [revisions,setRevisions]=useState([]);
+  useEffect(()=>{
+    if(!editing?.id){setRevisions([]);return;}
+    request('/api/admin?resource=revisions&content_id='+encodeURIComponent(editing.id))
+      .then(result=>setRevisions(result.items||[])).catch(()=>setRevisions([]));
+  },[editing?.id]);
   const blank=()=>({id:null,title:'',slug:'',summary:'',sort_order:items.length+1,data:{},change_note:''});
   const openNew=()=>{setError('');setSuccess('');setEditing(blank());};
   const openItem=item=>{setError('');setSuccess('');setEditing({...item,change_note:''});};
