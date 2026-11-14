@@ -212,7 +212,8 @@ export default function AdminApp() {
   const [active,setActive]=useState('dashboard');
   const [data,setData]=useState([]);
   const [dashboard,setDashboard]=useState(null);
-  const [roles,setRoles]=useState([]);\n  const [permissionCatalog,setPermissionCatalog]=useState([]);
+  const [roles,setRoles]=useState([]);
+  const [permissionCatalog,setPermissionCatalog]=useState([]);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState('');
   const permissions=auth.permissions||[];
