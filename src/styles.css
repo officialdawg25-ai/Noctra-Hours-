@@ -267,7 +267,7 @@
 
 /* Horizontal catalogue rail */
 .work-catalogue{display:flex;gap:26px;max-width:none;width:100%;overflow:hidden;margin:0 auto;padding:4px 0 18px;position:relative;mask-image:linear-gradient(90deg,transparent 0,#000 2.5%,#000 97.5%,transparent 100%)}
-.work-catalogue-track{display:flex;align-items:stretch;gap:26px;flex:0 0 auto;width:max-content;animation:work-catalogue-drift 78s linear infinite}
+.work-catalogue-track{display:flex;align-items:stretch;gap:0;flex:0 0 auto;width:max-content;animation:work-catalogue-drift 78s linear infinite}\n.work-catalogue-set{display:flex;align-items:stretch;gap:26px;flex:0 0 auto;width:max-content;padding-right:26px}
 .work-catalogue:hover .work-catalogue-track,.work-catalogue:focus-within .work-catalogue-track{animation-play-state:paused}
 .work-catalogue-track-copy{aria-hidden:true}
 .work-type{flex:0 0 clamp(320px,31vw,430px);width:clamp(320px,31vw,430px);min-width:0;border-top:1px solid rgba(242,243,245,.22);padding-top:13px}
@@ -275,10 +275,10 @@
 .work-type-copy>p{min-height:66px}
 .work-showcase .work-catalogue{max-width:var(--max);margin:0 auto}
 .work-catalogue-page .work-catalogue{max-width:var(--max);margin:0 auto}
-@keyframes work-catalogue-drift{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 13px))}}
+@keyframes work-catalogue-drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media(max-width:900px){.work-type{flex-basis:clamp(310px,48vw,390px);width:clamp(310px,48vw,390px)}}
-@media(max-width:640px){.work-catalogue{gap:18px;margin-left:-22px;width:calc(100% + 44px);padding-left:22px;padding-right:22px;mask-image:linear-gradient(90deg,transparent 0,#000 4%,#000 96%,transparent 100%)}.work-catalogue-track{gap:18px;animation-duration:66s}.work-type{flex-basis:82vw;width:82vw;padding-top:11px}.work-visual{aspect-ratio:1.5;padding:12px}.work-type-copy{padding-top:15px}.work-type-copy>p{min-height:0}.work-type h3{font-size:27px}.work-type-meta{font-size:7px}.work-type-detail{margin-top:16px}.work-type-fit{margin:14px 0}}
-@media(prefers-reduced-motion:reduce){.work-catalogue{overflow-x:auto;scrollbar-width:thin;scroll-snap-type:x mandatory;mask-image:none}.work-catalogue-track{animation:none}.work-type{scroll-snap-align:start}.work-catalogue-track-copy{display:none}}
+@media(max-width:640px){.work-catalogue{gap:18px;margin-left:-22px;width:calc(100% + 44px);padding-left:22px;padding-right:22px;mask-image:linear-gradient(90deg,transparent 0,#000 4%,#000 96%,transparent 100%)}.work-catalogue-track{animation-duration:66s}.work-catalogue-set{gap:18px;padding-right:18px}.work-type{flex-basis:82vw;width:82vw;padding-top:11px}.work-visual{aspect-ratio:1.5;padding:12px}.work-type-copy{padding-top:15px}.work-type-copy>p{min-height:0}.work-type h3{font-size:27px}.work-type-meta{font-size:7px}.work-type-detail{margin-top:16px}.work-type-fit{margin:14px 0}}
+@media(prefers-reduced-motion:reduce){.work-catalogue{overflow-x:auto;scrollbar-width:thin;scroll-snap-type:x mandatory;mask-image:none}.work-catalogue-track{animation:none}.work-catalogue-set{flex-direction:column;padding-right:0}.work-catalogue-set[aria-hidden="true"]{display:none}.work-type{scroll-snap-align:start}.work-catalogue-track-copy{display:none}}
 /* Digital work catalogue — distinct, illustrative interface studies */
 .work-showcase{max-width:none;border-top:1px solid var(--line);padding-left:max(5vw,24px);padding-right:max(5vw,24px)}
 .work-showcase-head{max-width:var(--max);margin:0 auto 44px;display:flex;align-items:end;justify-content:space-between;gap:40px}
