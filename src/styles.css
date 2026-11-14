@@ -359,3 +359,40 @@
 @media(max-width:900px){.work-catalogue-compact{grid-template-columns:repeat(2,minmax(0,1fr))}.work-showcase-head{align-items:flex-start;flex-direction:column;gap:10px}}
 @media(max-width:640px){.work-showcase{padding-left:22px;padding-right:22px}.work-showcase-head{margin-bottom:30px}.work-catalogue,.work-catalogue-compact{grid-template-columns:1fr;gap:38px}.work-visual{aspect-ratio:1.45;padding:12px}.work-type-copy>p{min-height:0}.work-type h3{font-size:27px}.work-type-meta{font-size:7px}.work-showcase-foot{align-items:flex-start;flex-direction:column}.work-catalogue-page{padding-top:28px}.work-catalogue-note{margin-bottom:38px}.work-catalogue-end{margin-top:70px}}
 @media(prefers-reduced-motion:reduce){.work-type-link span{transition:none}}
+
+/* Horizontal digital work rail */
+.work-catalogue{display:block;max-width:var(--max);margin:0 auto;min-width:0}
+.work-catalogue-controls{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line);font:8px 'JetBrains Mono';letter-spacing:.9px;color:#8792a1}
+.work-catalogue-controls>div{display:flex;gap:7px}
+.work-catalogue-controls button{width:32px;height:30px;border:1px solid rgba(235,239,245,.2);background:transparent;color:#d7dce4;font-size:17px;line-height:1;cursor:pointer;transition:background .2s,border-color .2s}
+.work-catalogue-controls button:hover,.work-catalogue-controls button:focus-visible{background:#202630;border-color:#748297;outline:none}
+.work-catalogue-viewport{width:100%;overflow:hidden;overscroll-behavior-x:contain;scrollbar-width:none;outline:none}
+.work-catalogue-viewport::-webkit-scrollbar{display:none}
+.work-catalogue-viewport:focus-visible{outline:1px solid #758398;outline-offset:4px}
+.work-catalogue-track{display:flex;width:max-content}
+.work-catalogue-set{display:flex;flex:0 0 auto;gap:24px;padding-right:24px;width:max-content}
+.work-catalogue .work-type{flex:0 0 clamp(285px,29vw,390px);width:clamp(285px,29vw,390px);min-width:0;border-top:1px solid rgba(242,243,245,.2);padding-top:13px}
+.work-catalogue .work-visual{aspect-ratio:1.58}
+.work-catalogue .work-type-copy>p{min-height:66px}
+.work-catalogue-progress{height:1px;background:rgba(240,243,248,.12);margin-top:22px;overflow:hidden}
+.work-catalogue-progress span{display:block;height:100%;background:#9ba8ba;transition:width .25s ease}
+.work-catalogue-compact .work-type h3{font-size:clamp(22px,2.2vw,29px)}
+.work-catalogue-compact .work-type-copy{padding-top:15px}
+.work-catalogue-compact .work-type-detail{margin-top:16px}
+@media(max-width:1100px) and (min-width:641px){.work-catalogue .work-type{flex-basis:44vw;width:44vw}.work-catalogue-set{gap:20px;padding-right:20px}}
+@media(max-width:640px){
+ .work-catalogue-viewport{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+ .work-catalogue-set{gap:16px;padding-right:16px}
+ .work-catalogue-set[aria-hidden="true"]{display:none}
+ .work-catalogue .work-type{flex-basis:84%;width:84%;scroll-snap-align:start;scroll-snap-stop:normal}
+ .work-catalogue .work-type-copy>p{min-height:0}
+ .work-catalogue .work-type h3{font-size:26px}
+ .work-catalogue .work-visual{aspect-ratio:1.5}
+ .work-catalogue-controls{margin-bottom:12px}
+ .work-catalogue-progress{margin-top:17px}
+}
+@media(prefers-reduced-motion:reduce){
+ .work-catalogue-viewport{scroll-behavior:auto}
+ .work-catalogue-progress span{transition:none}
+ .work-catalogue-controls button{transition:none}
+}
