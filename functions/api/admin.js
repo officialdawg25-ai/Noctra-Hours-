@@ -152,6 +152,7 @@ async function loginWithPassword(env, email, password) {
   if (!result.ok || !result.data?.access_token) return null;
   const context = await adminContext(env,result.data.user);
   if (!context) return null;
+  await rest(env,'admin_members?user_id=eq.'+encodeURIComponent(result.data.user.id),'PATCH',{last_login_at:new Date().toISOString(),updated_at:new Date().toISOString()},'return=minimal').catch(()=>{});
   const tokens = {
     access_token:result.data.access_token,
     refresh_token:result.data.refresh_token,
@@ -509,7 +510,11 @@ export async function onRequest({request,env}) {
         const authUsers=usersResponse.ok?(await usersResponse.json().catch(()=>({users:[]}))).users||[]:[];
         const userMap=new Map(authUsers.map(u=>[u.id,u.email||'']));
         const roleMap=new Map((roles.data||[]).map(r=>[r.id,r.name]));
-        const permissionMap=new Map((permissions.data||[]).map(p=>[p.role_id,(permissionMap.get(p.role_id)||[]).concat(p.permission_id)]));
+        const permissionMap=new Map();
+        for (const permission of permissions.data||[]) {
+          if (!permissionMap.has(permission.role_id)) permissionMap.set(permission.role_id,[]);
+          permissionMap.get(permission.role_id).push(permission.permission_id);
+        }
         return json({
           items:(members.data||[]).map(m=>({...m,email:userMap.get(m.user_id)||'',role:roleMap.get(m.role_id)||'unknown'})),
           roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} ))
