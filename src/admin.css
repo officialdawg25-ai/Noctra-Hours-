@@ -63,3 +63,7 @@
 @media(max-width:600px){.nh-media-form{grid-template-columns:1fr}.nh-media-grid{grid-template-columns:1fr}.nh-media-preview{height:190px}}
 
 .nh-revision-list{border-top:1px solid #dfe2e6;margin-top:18px;padding-top:15px}.nh-revision-list>span{margin-bottom:10px}.nh-revision-list>div{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid #e7e9ec;padding:10px 0}.nh-revision-list>div>span{font-size:10px;color:#4e5865}.nh-revision-list small{display:block;font-size:9px;color:#89919b;margin-top:4px}
+
+.nh-role-builder{margin-bottom:18px}.nh-role-builder form{display:flex;flex-direction:column;gap:17px}.nh-role-fields{display:grid;grid-template-columns:1fr 1.5fr;gap:12px}.nh-role-fields .nh-field{margin:0}.nh-permission-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#e5e8eb;border:1px solid #e5e8eb}.nh-permission-grid label{background:#fff;display:flex;align-items:flex-start;gap:9px;padding:12px;cursor:pointer;min-width:0}.nh-permission-grid input{margin:2px 0 0;accent-color:#202833}.nh-permission-grid span{display:flex;flex-direction:column;gap:4px;min-width:0}.nh-permission-grid strong{font:10px monospace;overflow-wrap:anywhere}.nh-permission-grid small{font-size:9px;line-height:1.45;color:#858c96}
+@media(max-width:900px){.nh-permission-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nh-role-fields{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.nh-permission-grid{grid-template-columns:1fr}.nh-role-fields{grid-template-columns:1fr}}
