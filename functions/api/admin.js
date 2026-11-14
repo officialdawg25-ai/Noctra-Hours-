@@ -187,10 +187,23 @@ export async function onRequest({request,env}) {
 
   if (method === 'POST') {
     if (!originAllowed(request)) return json({error:'Request origin is not allowed.'},403);
-    const raw = await request.text();
-    if (raw.length > 150000) return json({error:'Request is too large.'},413);
-    let body;
-    try { body = JSON.parse(raw || '{}'); } catch { return json({error:'Invalid request body.'},400); }
+    const contentType=request.headers.get('content-type')||'';
+    let body, uploadFile=null;
+    if (contentType.includes('multipart/form-data')) {
+      try {
+        const form=await request.formData();
+        uploadFile=form.get('file');
+        body={
+          alt_text:String(form.get('alt_text')||'').slice(0,500),
+          caption:String(form.get('caption')||'').slice(0,1000),
+          category:String(form.get('category')||'general').slice(0,80)
+        };
+      } catch { return json({error:'Invalid media upload.'},400); }
+    } else {
+      const raw = await request.text();
+      if (raw.length > 150000) return json({error:'Request is too large.'},413);
+      try { body = JSON.parse(raw || '{}'); } catch { return json({error:'Invalid request body.'},400); }
+    }
 
     if (action === 'bootstrap') {
       const expected = String(env.ADMIN_BOOTSTRAP_SECRET || '');
@@ -367,6 +380,69 @@ export async function onRequest({request,env}) {
     }
 
 
+    if (action === 'upload-media') {
+      if (!can(context,'media.manage')) return json({error:'You do not have permission to upload media.'},403,responseHeaders);
+      if (!uploadFile || typeof uploadFile.arrayBuffer!=='function') return json({error:'Choose an image to upload.'},400,responseHeaders);
+      const allowedTypes=new Set(['image/jpeg','image/png','image/webp','image/gif']);
+      if (!allowedTypes.has(uploadFile.type) || uploadFile.size<=0 || uploadFile.size>12582912) return json({error:'Use a JPG, PNG, WebP or GIF image up to 12 MB.'},400,responseHeaders);
+      const cleanName=String(uploadFile.name||'image').normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(-100)||'image';
+      const objectPath=new Date().toISOString().slice(0,10)+'/'+crypto.randomUUID()+'-'+cleanName;
+      try {
+        const storageResponse=await fetch(baseUrl(env)+'/storage/v1/object/noctra-media/'+objectPath.split('/').map(encodeURIComponent).join('/'),{
+          method:'POST',
+          headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env),'content-type':uploadFile.type,'x-upsert':'false'},
+          body:uploadFile
+        });
+        if (!storageResponse.ok) return json({error:'Storage rejected the upload. Check the media bucket configuration.'},400,responseHeaders);
+        const publicUrl=baseUrl(env)+'/storage/v1/object/public/noctra-media/'+objectPath.split('/').map(encodeURIComponent).join('/');
+        const record=await rest(env,'admin_media_assets','POST',{
+          storage_path:objectPath,bucket:'noctra-media',file_name:cleanName,mime_type:uploadFile.type,
+          file_size:uploadFile.size,alt_text:body.alt_text,caption:body.caption,category:body.category,
+          created_by:context.user.id,metadata:{public_url:publicUrl}
+        },'return=representation');
+        const item=record.data?.[0];
+        await audit(env,context.user,'media.upload','admin_media_assets',item?.id,null,{storage_path:objectPath,mime_type:uploadFile.type,file_size:uploadFile.size},request);
+        return json({item:item?{...item,public_url:publicUrl}:null},201,responseHeaders);
+      } catch { return json({error:'The image could not be stored. Please retry.'},500,responseHeaders); }
+    }
+
+    if (action === 'update-media') {
+      if (!can(context,'media.manage')) return json({error:'You do not have permission to edit media metadata.'},403,responseHeaders);
+      if (!body.id) return json({error:'Media identifier is required.'},400,responseHeaders);
+      try {
+        const previous=await rest(env,'admin_media_assets?select=*&id=eq.'+encodeURIComponent(body.id)+'&limit=1');
+        if (!previous.data?.length) return json({error:'Media asset not found.'},404,responseHeaders);
+        const patch={alt_text:String(body.alt_text||'').slice(0,500),caption:String(body.caption||'').slice(0,1000),category:String(body.category||'general').slice(0,80)};
+        const updated=await rest(env,'admin_media_assets?id=eq.'+encodeURIComponent(body.id),'PATCH',patch,'return=representation');
+        await audit(env,context.user,'media.metadata.update','admin_media_assets',body.id,previous.data[0],patch,request);
+        return json({item:updated.data?.[0]||null},200,responseHeaders);
+      } catch { return json({error:'Media metadata could not be updated.'},500,responseHeaders); }
+    }
+
+    if (action === 'delete-media') {
+      if (!can(context,'media.manage')) return json({error:'You do not have permission to delete media.'},403,responseHeaders);
+      if (!body.id) return json({error:'Media identifier is required.'},400,responseHeaders);
+      try {
+        const found=await rest(env,'admin_media_assets?select=*&id=eq.'+encodeURIComponent(body.id)+'&limit=1');
+        const asset=found.data?.[0];
+        if (!asset) return json({error:'Media asset not found.'},404,responseHeaders);
+        const content=await rest(env,'admin_content?select=id,data');
+        const settings=await rest(env,'admin_site_settings?select=key,value');
+        const publicUrl=asset.metadata?.public_url || (baseUrl(env)+'/storage/v1/object/public/'+asset.bucket+'/'+asset.storage_path.split('/').map(encodeURIComponent).join('/'));
+        const needle=String(asset.storage_path);
+        const referenced=(content.data||[]).some(row=>JSON.stringify(row.data||{}).includes(needle)||JSON.stringify(row.data||{}).includes(publicUrl)) ||
+          (settings.data||[]).some(row=>JSON.stringify(row.value||{}).includes(needle)||JSON.stringify(row.value||{}).includes(publicUrl));
+        if (referenced) return json({error:'This asset is referenced by website content or settings. Replace those references before deleting it.'},409,responseHeaders);
+        const deleted=await fetch(baseUrl(env)+'/storage/v1/object/'+encodeURIComponent(asset.bucket)+'/'+asset.storage_path.split('/').map(encodeURIComponent).join('/'),{
+          method:'DELETE',headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env)}
+        });
+        if (!deleted.ok) return json({error:'The storage object could not be deleted; its media record was preserved.'},409,responseHeaders);
+        await rest(env,'admin_media_assets?id=eq.'+encodeURIComponent(body.id),'DELETE');
+        await audit(env,context.user,'media.delete','admin_media_assets',body.id,asset,null,request);
+        return json({ok:true},200,responseHeaders);
+      } catch { return json({error:'The media asset could not be safely deleted.'},500,responseHeaders); }
+    }
+
     if (action === 'invite-user') {
       if (!can(context,'users.manage')) return json({error:'You do not have permission to invite administrators.'},403,responseHeaders);
       const email=String(body.email||'').trim().toLowerCase();
@@ -496,6 +572,11 @@ export async function onRequest({request,env}) {
         if (!enquiryId) return json({error:'Enquiry identifier required.'},400,headers);
         const rows=await rest(env,'admin_enquiry_notes?select=id,enquiry_id,note,created_by,created_at&enquiry_id=eq.'+encodeURIComponent(enquiryId)+'&order=created_at.desc');
         return json({items:rows.data||[]},200,headers);
+      }
+      if (resource === 'media') {
+        if (!can(context,'media.manage')) return json({error:'Permission denied.'},403,headers);
+        const rows=await rest(env,'admin_media_assets?select=*&order=created_at.desc&limit=300');
+        return json({items:(rows.data||[]).map(item=>({...item,public_url:item.metadata?.public_url || (baseUrl(env)+'/storage/v1/object/public/'+item.bucket+'/'+item.storage_path.split('/').map(encodeURIComponent).join('/'))}))},200,headers);
       }
       if (resource === 'users') {
         if (!can(context,'users.manage')) return json({error:'Permission denied.'},403,headers);
