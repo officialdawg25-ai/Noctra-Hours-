@@ -116,6 +116,19 @@ async function readSession(request, env) {
   if (!context) return null;
   return {context,tokens,cookie:refreshed ? await sessionCookie(tokens,env) : null};
 }
+async function loginRateAllowed(request, env) {
+  const ip=request.headers.get('CF-Connecting-IP') || 'unknown';
+  const digest=await crypto.subtle.digest('SHA-256',enc.encode('noctra-admin|'+ip+'|'+String(env.ADMIN_SESSION_SECRET||'')));
+  const key=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,'0')).join('');
+  const result=await rest(env,'rpc/consume_enquiry_rate_limit','POST',{p_key:key,p_window_seconds:60,p_max_requests:5});
+  return result.data === true;
+}
+async function exactCount(env, path) {
+  const result=await rest(env,path,'GET',undefined,'count=exact');
+  const range=result.headers.get('content-range') || '';
+  const total=Number(range.split('/')[1]);
+  return Number.isFinite(total)?total:(result.data||[]).length;
+}
 async function audit(env, actor, action, resource, resourceId, previousValues, newValues, request, outcome='success') {
   const details = {source:'admin_portal'};
   const requestMetadata = {
@@ -270,7 +283,7 @@ export async function onRequest({request,env}) {
           summary:String(body.summary || '').slice(0,1000),
           sort_order:Number.isFinite(Number(body.sort_order))?Number(body.sort_order):current.sort_order,
           data:body.data || {},updated_by:context.user.id,updated_at:new Date().toISOString(),
-          status:current.status === 'published' ? 'draft' : current.status
+          status:'draft',published_at:null
         },'return=representation');
         const row = updated.data?.[0];
         await audit(env,context.user,'content.update',body.resource,body.id,safeContent(current),safeContent(row || {}),request);
@@ -380,20 +393,20 @@ export async function onRequest({request,env}) {
     try {
       if (resource === 'dashboard') {
         if (!can(context,'content.read') && !can(context,'enquiries.read')) return json({error:'Permission denied.'},403,headers);
-        const [content,enquiries] = await Promise.all([
-          can(context,'content.read') ? rest(env,'admin_content?select=id,resource,status,updated_at&order=updated_at.desc&limit=100') : Promise.resolve({data:[]}),
-          can(context,'enquiries.read') ? rest(env,'project_enquiries?select=id,status,created_at&order=created_at.desc&limit=100') : Promise.resolve({data:[]})
+        const counts = await Promise.all([
+          can(context,'content.read') ? exactCount(env,'admin_content?select=id') : Promise.resolve(0),
+          can(context,'content.read') ? exactCount(env,'admin_content?select=id&status=eq.published') : Promise.resolve(0),
+          can(context,'content.read') ? exactCount(env,'admin_content?select=id&status=eq.draft') : Promise.resolve(0),
+          can(context,'content.read') ? exactCount(env,'admin_content?select=id&status=eq.review') : Promise.resolve(0),
+          can(context,'enquiries.read') ? exactCount(env,'project_enquiries?select=id') : Promise.resolve(0),
+          can(context,'enquiries.read') ? exactCount(env,'project_enquiries?select=id&status=in.(new,received)') : Promise.resolve(0),
+          can(context,'enquiries.read') ? rest(env,'project_enquiries?select=id,status,created_at&order=created_at.desc&limit=5') : Promise.resolve({data:[]}),
+          can(context,'content.read') ? rest(env,'admin_content?select=id,resource,title,slug,status,updated_at&order=updated_at.desc&limit=5') : Promise.resolve({data:[]})
         ]);
-        const contentRows=content.data||[], enquiryRows=enquiries.data||[];
         return json({
-          content_count:contentRows.length,
-          published_count:contentRows.filter(x=>x.status==='published').length,
-          draft_count:contentRows.filter(x=>x.status==='draft').length,
-          review_count:contentRows.filter(x=>x.status==='review').length,
-          enquiry_count:enquiryRows.length,
-          new_enquiries:enquiryRows.filter(x=>['new','received'].includes(x.status)).length,
-          recent_enquiries:enquiryRows.slice(0,5),
-          recent_content:contentRows.slice(0,5)
+          content_count:counts[0],published_count:counts[1],draft_count:counts[2],review_count:counts[3],
+          enquiry_count:counts[4],new_enquiries:counts[5],
+          recent_enquiries:counts[6].data||[],recent_content:counts[7].data||[]
         },200,headers);
       }
       if (RESOURCES.has(resource)) {
