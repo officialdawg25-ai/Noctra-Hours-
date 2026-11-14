@@ -320,6 +320,43 @@ export async function onRequest({request,env}) {
       }
     }
 
+    if (action === 'restore-content') {
+      if (!can(context,'content.write')) return json({error:'You do not have permission to restore content.'},403,responseHeaders);
+      if (!body.id || !Number.isInteger(Number(body.revision_number)) || !RESOURCES.has(body.resource)) return json({error:'Select a valid content revision.'},400,responseHeaders);
+      try {
+        const currentResult=await rest(env,'admin_content?select=*&id=eq.'+encodeURIComponent(body.id)+'&limit=1');
+        const current=currentResult.data?.[0];
+        if (!current || current.resource!==body.resource) return json({error:'Content record not found.'},404,responseHeaders);
+        const revisionResult=await rest(env,'admin_content_revisions?select=*&content_id=eq.'+encodeURIComponent(body.id)+'&revision_number=eq.'+Number(body.revision_number)+'&limit=1');
+        const revision=revisionResult.data?.[0];
+        if (!revision?.snapshot) return json({error:'The selected revision was not found.'},404,responseHeaders);
+        const latest=await rest(env,'admin_content_revisions?select=revision_number&content_id=eq.'+encodeURIComponent(body.id)+'&order=revision_number.desc&limit=1');
+        const nextRevision=Number(latest.data?.[0]?.revision_number||0)+1;
+        await rest(env,'admin_content_revisions','POST',{
+          content_id:current.id,resource:current.resource,revision_number:nextRevision,
+          snapshot:current,change_note:'Snapshot before restoring revision '+body.revision_number,
+          created_by:context.user.id
+        },'return=minimal');
+        const snapshot=revision.snapshot;
+        const patch={
+          title:String(snapshot.title||current.title).slice(0,180),
+          slug:String(snapshot.slug||current.slug),
+          summary:String(snapshot.summary||'').slice(0,1000),
+          sort_order:Number.isFinite(Number(snapshot.sort_order))?Number(snapshot.sort_order):current.sort_order,
+          data:snapshot.data&&typeof snapshot.data==='object'?snapshot.data:{},
+          status:'draft',published_at:null,updated_by:context.user.id,updated_at:new Date().toISOString()
+        };
+        const restored=await rest(env,'admin_content?id=eq.'+encodeURIComponent(body.id),'PATCH',patch,'return=representation');
+        await rest(env,'admin_publication_history','POST',{
+          content_id:current.id,resource:current.resource,action:'restored',
+          actor_id:context.user.id,revision_number:Number(body.revision_number),
+          details:{restored_revision:Number(body.revision_number),new_revision:nextRevision}
+        },'return=minimal');
+        await audit(env,context.user,'content.restore',body.resource,body.id,safeContent(current),safeContent(restored.data?.[0]||patch),request);
+        return json({item:restored.data?.[0]?safeContent(restored.data[0]):null},200,responseHeaders);
+      } catch { return json({error:'The selected revision could not be restored.'},500,responseHeaders); }
+    }
+
     if (action === 'content-workflow') {
       const operation = body.operation;
       const required = operation === 'submit' ? 'content.submit' :
@@ -630,6 +667,20 @@ export async function onRequest({request,env}) {
           items:(members.data||[]).map(m=>({...m,email:userMap.get(m.user_id)||'',role:roleMap.get(m.role_id)||'unknown'})),
           roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} ))
         },200,headers);
+      }
+      if (resource === 'preview') {
+        if (!can(context,'content.read')) return json({error:'Permission denied.'},403,headers);
+        const id=url.searchParams.get('id');
+        if (!id) return json({error:'Content identifier required.'},400,headers);
+        const row=await rest(env,'admin_content?select=*&id=eq.'+encodeURIComponent(id)+'&limit=1');
+        return row.data?.[0]?json({item:safeContent(row.data[0])},200,headers):json({error:'Content record not found.'},404,headers);
+      }
+      if (resource === 'revisions') {
+        if (!can(context,'content.read')) return json({error:'Permission denied.'},403,headers);
+        const id=url.searchParams.get('content_id');
+        if (!id) return json({error:'Content identifier required.'},400,headers);
+        const rows=await rest(env,'admin_content_revisions?select=id,revision_number,change_note,created_by,created_at&content_id=eq.'+encodeURIComponent(id)+'&order=revision_number.desc&limit=50');
+        return json({items:rows.data||[]},200,headers);
       }
       if (resource === 'settings') {
         if (!can(context,'settings.manage')) return json({error:'Permission denied.'},403,headers);
