@@ -695,7 +695,8 @@ export async function onRequest({request,env}) {
         }
         return json({
           items:(members.data||[]).map(m=>({...m,email:userMap.get(m.user_id)||'',role:roleMap.get(m.role_id)||'unknown'})),
-          roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} )),\n          permission_catalog:catalog.data||[]
+          roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} )),
+          permission_catalog:catalog.data||[]
         },200,headers);
       }
       if (resource === 'preview') {
