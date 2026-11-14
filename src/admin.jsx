@@ -200,7 +200,8 @@ export default function AdminApp() {
   const [auth,setAuth]=useState({loading:true,authenticated:false,setup_required:false,configuration_missing:false});
   const [active,setActive]=useState('dashboard');
   const [data,setData]=useState([]);
-  const [dashboard,setDashboard]=useState(null);\n  const [roles,setRoles]=useState([]);
+  const [dashboard,setDashboard]=useState(null);
+  const [roles,setRoles]=useState([]);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState('');
   const permissions=auth.permissions||[];
@@ -279,7 +280,8 @@ function UsersModule({items,roles,currentUserId,onReload}) {
     </section>
   </div>;
 }
-\nfunction UnavailableModule({active}) {
+
+function UnavailableModule({active}) {
   const copy={
     media:'The existing media metadata table and storage bucket have been discovered. Upload, replacement and reference-safe deletion controls are not yet enabled.',
     users:'Role and permission records exist. User invitations, suspension controls and session revocation are being completed after initial administrator bootstrap.',
