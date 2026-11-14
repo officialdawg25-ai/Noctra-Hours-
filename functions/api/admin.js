@@ -366,6 +366,74 @@ export async function onRequest({request,env}) {
     }
 
 
+    if (action === 'invite-user') {
+      if (!can(context,'users.manage')) return json({error:'You do not have permission to invite administrators.'},403,responseHeaders);
+      const email=String(body.email||'').trim().toLowerCase();
+      const displayName=String(body.display_name||'').trim().slice(0,100);
+      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || !body.role_id) return json({error:'A valid email and administrative role are required.'},400,responseHeaders);
+      try {
+        const roleResult=await rest(env,'admin_roles?select=id,name&id=eq.'+encodeURIComponent(body.role_id)+'&limit=1');
+        const role=roleResult.data?.[0];
+        if (!role) return json({error:'The selected role does not exist.'},400,responseHeaders);
+        const invite=await fetch(baseUrl(env)+'/auth/v1/invite',{
+          method:'POST',
+          headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env),'content-type':'application/json'},
+          body:JSON.stringify({email,data:{display_name:displayName}})
+        });
+        const invited=await invite.json().catch(()=>({}));
+        if (!invite.ok || !invited.id) return json({error:'The invitation could not be created. Check the email and Supabase Auth email configuration.'},400,responseHeaders);
+        await rest(env,'admin_members','POST',{user_id:invited.id,role_id:role.id,display_name:displayName,active:true},'return=minimal');
+        await audit(env,context.user,'admin.user.invite','admin_members',invited.id,null,{email,role:role.name},request);
+        return json({ok:true,user_id:invited.id,role:role.name},201,responseHeaders);
+      } catch { return json({error:'The administrator invitation could not be completed.'},500,responseHeaders); }
+    }
+
+    if (action === 'update-role') {
+      if (!can(context,'users.manage')) return json({error:'You do not have permission to change administrative roles.'},403,responseHeaders);
+      if (!body.user_id || !body.role_id || body.user_id===context.user.id) return json({error:'Select another administrator and a valid role.'},400,responseHeaders);
+      try {
+        const targetResult=await rest(env,'admin_members?select=user_id,role_id,active&user_id=eq.'+encodeURIComponent(body.user_id)+'&limit=1');
+        const target=targetResult.data?.[0];
+        const roleResult=await rest(env,'admin_roles?select=id,name&id=eq.'+encodeURIComponent(body.role_id)+'&limit=1');
+        const role=roleResult.data?.[0];
+        if (!target || !role) return json({error:'Administrator or role not found.'},404,responseHeaders);
+        const oldRole=await rest(env,'admin_roles?select=name&id=eq.'+encodeURIComponent(target.role_id)+'&limit=1');
+        if (oldRole.data?.[0]?.name==='super_administrator') {
+          const remaining=await rest(env,'admin_members?select=user_id,role_id&active=eq.true');
+          const activeSuper=await Promise.all((remaining.data||[]).map(async m=>{
+            const r=await rest(env,'admin_roles?select=name&id=eq.'+encodeURIComponent(m.role_id)+'&limit=1');
+            return r.data?.[0]?.name==='super_administrator';
+          }));
+          if (activeSuper.filter(Boolean).length<=1 && role.name!=='super_administrator') return json({error:'The last active super administrator cannot be demoted.'},409,responseHeaders);
+        }
+        await rest(env,'admin_members?user_id=eq.'+encodeURIComponent(body.user_id),'PATCH',{role_id:role.id,updated_at:new Date().toISOString()},'return=minimal');
+        await audit(env,context.user,'admin.user.role_change','admin_members',body.user_id,{role:oldRole.data?.[0]?.name},{role:role.name},request);
+        return json({ok:true},200,responseHeaders);
+      } catch { return json({error:'The administrative role could not be changed.'},500,responseHeaders); }
+    }
+
+    if (action === 'suspend-user') {
+      if (!can(context,'users.manage')) return json({error:'You do not have permission to suspend administrators.'},403,responseHeaders);
+      if (!body.user_id || body.user_id===context.user.id) return json({error:'You cannot suspend your own active session.'},400,responseHeaders);
+      try {
+        const targetResult=await rest(env,'admin_members?select=user_id,role_id,active&user_id=eq.'+encodeURIComponent(body.user_id)+'&limit=1');
+        const target=targetResult.data?.[0];
+        if (!target) return json({error:'Administrator not found.'},404,responseHeaders);
+        const roleResult=await rest(env,'admin_roles?select=name&id=eq.'+encodeURIComponent(target.role_id)+'&limit=1');
+        if (roleResult.data?.[0]?.name==='super_administrator' && target.active) {
+          const remaining=await rest(env,'admin_members?select=user_id,role_id&active=eq.true');
+          const activeSuper=await Promise.all((remaining.data||[]).map(async m=>{
+            const r=await rest(env,'admin_roles?select=name&id=eq.'+encodeURIComponent(m.role_id)+'&limit=1');
+            return r.data?.[0]?.name==='super_administrator';
+          }));
+          if (activeSuper.filter(Boolean).length<=1) return json({error:'The last active super administrator cannot be suspended.'},409,responseHeaders);
+        }
+        await rest(env,'admin_members?user_id=eq.'+encodeURIComponent(body.user_id),'PATCH',{active:false,suspended_at:new Date().toISOString(),updated_at:new Date().toISOString()},'return=minimal');
+        await audit(env,context.user,'admin.user.suspend','admin_members',body.user_id,{active:target.active},{active:false},request);
+        return json({ok:true},200,responseHeaders);
+      } catch { return json({error:'The administrator could not be suspended.'},500,responseHeaders); }
+    }
+
     if (action === 'create-redirect') {
       if (!can(context,'seo.manage')) return json({error:'You do not have permission to manage redirects.'},403,responseHeaders);
       const sourcePath=String(body.source_path||'').trim();
@@ -427,6 +495,25 @@ export async function onRequest({request,env}) {
         if (!enquiryId) return json({error:'Enquiry identifier required.'},400,headers);
         const rows=await rest(env,'admin_enquiry_notes?select=id,enquiry_id,note,created_by,created_at&enquiry_id=eq.'+encodeURIComponent(enquiryId)+'&order=created_at.desc');
         return json({items:rows.data||[]},200,headers);
+      }
+      if (resource === 'users') {
+        if (!can(context,'users.manage')) return json({error:'Permission denied.'},403,headers);
+        const [members,roles,permissions] = await Promise.all([
+          rest(env,'admin_members?select=user_id,display_name,active,suspended_at,role_id,created_at,last_login_at&order=created_at.asc'),
+          rest(env,'admin_roles?select=id,name,description,is_system&order=name.asc'),
+          rest(env,'admin_role_permissions?select=role_id,permission_id')
+        ]);
+        const usersResponse=await fetch(baseUrl(env)+'/auth/v1/admin/users?page=1&per_page=200',{
+          headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env),accept:'application/json'}
+        });
+        const authUsers=usersResponse.ok?(await usersResponse.json().catch(()=>({users:[]}))).users||[]:[];
+        const userMap=new Map(authUsers.map(u=>[u.id,u.email||'']));
+        const roleMap=new Map((roles.data||[]).map(r=>[r.id,r.name]));
+        const permissionMap=new Map((permissions.data||[]).map(p=>[p.role_id,(permissionMap.get(p.role_id)||[]).concat(p.permission_id)]));
+        return json({
+          items:(members.data||[]).map(m=>({...m,email:userMap.get(m.user_id)||'',role:roleMap.get(m.role_id)||'unknown'})),
+          roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} ))
+        },200,headers);
       }
       if (resource === 'settings') {
         if (!can(context,'settings.manage')) return json({error:'Permission denied.'},403,headers);
