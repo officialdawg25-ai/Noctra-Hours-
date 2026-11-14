@@ -174,9 +174,11 @@ export async function onRequest({request,env}) {
     try {
       const session = await readSession(request,env);
       if (session) return json({authenticated:true,...session.context},200,cookieHeader(session));
-      if (!serviceKey(env) || !baseUrl(env)) return json({authenticated:false,setup_required:false,configuration_missing:true},503);
+      if (!serviceKey(env) || !baseUrl(env) || !anonKey(env) || String(env.ADMIN_SESSION_SECRET||'').length < 32) return json({authenticated:false,setup_required:false,configuration_missing:true},503);
       const members = await rest(env,'admin_members?select=user_id&limit=1');
-      return json({authenticated:false,setup_required:(members.data || []).length === 0});
+      const setupRequired=(members.data || []).length === 0;
+      const bootstrapUnavailable=setupRequired && (!env.ADMIN_BOOTSTRAP_EMAIL || String(env.ADMIN_BOOTSTRAP_SECRET||'').length < 32);
+      return json({authenticated:false,setup_required:setupRequired,bootstrap_unavailable:bootstrapUnavailable});
     } catch {
       return json({authenticated:false,setup_required:false,configuration_missing:true},503);
     }
