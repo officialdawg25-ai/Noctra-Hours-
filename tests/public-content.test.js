@@ -72,7 +72,7 @@ test('public CMS endpoint exposes only published, allowlisted and verified publi
     assert.equal(body.capabilities[0].data.internal_notes,undefined);
     assert.equal(body.ventures[0].data.relationship_type,'ecosystem_venture');
     assert.equal(body.ventures[0].data.internal_contact,undefined);
-    assert.equal(body.projects[0].data.live_url,'https://example.com');
+    assert.equal(body.projects[0].data.live_url,'https://example.com/');
     assert.equal(body.projects[0].data.private_repository,undefined);
     assert.equal(body.testimonials.length,1);
     assert.equal(body.testimonials[0].data.author_name,'A Client');
