@@ -200,7 +200,7 @@ export default function AdminApp() {
   const [auth,setAuth]=useState({loading:true,authenticated:false,setup_required:false,configuration_missing:false});
   const [active,setActive]=useState('dashboard');
   const [data,setData]=useState([]);
-  const [dashboard,setDashboard]=useState(null);
+  const [dashboard,setDashboard]=useState(null);\n  const [roles,setRoles]=useState([]);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState('');
   const permissions=auth.permissions||[];
@@ -263,7 +263,23 @@ function RedirectModule({items,onReload}) {
   const [source,setSource]=useState('');const [destination,setDestination]=useState('');const [status,setStatus]=useState('301');const [error,setError]=useState('');
   return <div className="nh-page"><div className="nh-page-heading"><div><div className="nh-overline">DISCOVERABILITY / SEO</div><h1>Redirects</h1><p>Review and manage explicit URL redirects. No redirect is created automatically.</p></div></div><section className="nh-panel nh-redirect-form"><Field label="Source path" value={source} onChange={setSource} placeholder="/old-page"/><Field label="Destination URL or path" value={destination} onChange={setDestination} placeholder="/new-page"/><label className="nh-field"><span>Status code</span><select value={status} onChange={e=>setStatus(e.target.value)}><option>301</option><option>302</option><option>307</option><option>308</option></select></label><button className="nh-primary" onClick={async()=>{try{await post('create-redirect',{source_path:source,destination_url:destination,status_code:Number(status)});setSource('');setDestination('');setError('');await onReload();}catch(err){setError(err.message);}}}>Add redirect ↗</button>{error&&<div className="nh-alert">{error}</div>}</section><section className="nh-panel">{items.length?items.map(item=><div className="nh-list-row" key={item.id}><div><strong>{item.source_path}</strong><small>{item.destination_url}</small></div><span>{item.status_code}</span></div>):<div className="nh-empty">No redirects have been configured.</div>}</section></div>;
 }
-function UnavailableModule({active}) {
+function UsersModule({items,roles,currentUserId,onReload}) {
+  const [email,setEmail]=useState('');const [displayName,setDisplayName]=useState('');const [roleId,setRoleId]=useState(roles.find(r=>r.name==='administrator')?.id||'');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');
+  useEffect(()=>{if(!roleId&&roles.length)setRoleId(roles.find(r=>r.name==='administrator')?.id||roles[0].id);},[roles,roleId]);
+  const invite=async event=>{event.preventDefault();setBusy(true);setError('');setNotice('');try{const result=await post('invite-user',{email,display_name:displayName,role_id:roleId});setNotice('Invitation created for '+email+'. Supabase email delivery must be configured.');setEmail('');setDisplayName('');await onReload();}catch(err){setError(err.message);}finally{setBusy(false);}};
+  const changeRole=async(userId,nextRole)=>{setError('');try{await post('update-role',{user_id:userId,role_id:nextRole});setNotice('Administrative role updated.');await onReload();}catch(err){setError(err.message);}};
+  const suspend=async userId=>{if(!window.confirm('Suspend this administrator? Their next server request will be denied.'))return;setError('');try{await post('suspend-user',{user_id:userId});setNotice('Administrator access suspended.');await onReload();}catch(err){setError(err.message);}};
+  return <div className="nh-page"><div className="nh-page-heading"><div><div className="nh-overline">SYSTEM / ACCESS CONTROL</div><h1>Users & permissions</h1><p>Manage Supabase Auth identities and their existing Noctra administrative memberships.</p></div></div>
+    {error&&<div className="nh-alert nh-alert-wide">{error}</div>}{notice&&<div className="nh-success">{notice}</div>}
+    <section className="nh-panel nh-user-invite"><div className="nh-panel-head"><div><span className="nh-overline">INVITE / AUTHORISED ACCESS</span><h2>Invite an administrator</h2></div></div>
+      <form onSubmit={invite} className="nh-invite-form"><Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="person@company.com"/><Field label="Display name" value={displayName} onChange={setDisplayName} placeholder="Name"/><label className="nh-field"><span>Role</span><select value={roleId} onChange={e=>setRoleId(e.target.value)}>{roles.map(r=><option key={r.id} value={r.id}>{r.name.replaceAll('_',' ')}</option>)}</select></label><button className="nh-primary" disabled={busy||!roleId}>{busy?'Sending…':'Send invitation'} ↗</button></form>
+    </section>
+    <section className="nh-panel nh-user-list"><div className="nh-panel-head"><h2>Administrative accounts</h2><span className="nh-live">{items.length} MEMBERSHIPS</span></div>
+      {items.length?items.map(item=><div className="nh-user-row" key={item.user_id}><div><strong>{item.display_name||item.email||'Administrator'}</strong><small>{item.email||item.user_id}</small></div><select aria-label={'Role for '+(item.email||item.user_id)} value={item.role_id} disabled={item.user_id===currentUserId||!item.active} onChange={e=>changeRole(item.user_id,e.target.value)}>{roles.map(r=><option key={r.id} value={r.id}>{r.name.replaceAll('_',' ')}</option>)}</select><span className={'nh-status '+(item.active?'success':'archived')}>{item.active?'active':'suspended'}</span>{item.user_id!==currentUserId&&item.active&&<button className="nh-outline" onClick={()=>suspend(item.user_id)}>Suspend</button>}</div>):<div className="nh-empty">No administrative memberships have been created.</div>}
+    </section>
+  </div>;
+}
+\nfunction UnavailableModule({active}) {
   const copy={
     media:'The existing media metadata table and storage bucket have been discovered. Upload, replacement and reference-safe deletion controls are not yet enabled.',
     users:'Role and permission records exist. User invitations, suspension controls and session revocation are being completed after initial administrator bootstrap.',
