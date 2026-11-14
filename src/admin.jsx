@@ -281,7 +281,40 @@ function UsersModule({items,roles,currentUserId,onReload}) {
   </div>;
 }
 
-function UnavailableModule({active}) {
+function MediaModule({items,onReload}) {
+  const [file,setFile]=useState(null);const [alt,setAlt]=useState('');const [caption,setCaption]=useState('');const [category,setCategory]=useState('general');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');
+  const upload=async event=>{
+    event.preventDefault();if(!file)return;setBusy(true);setError('');setNotice('');
+    try{
+      const form=new FormData();form.append('file',file);form.append('alt_text',alt);form.append('caption',caption);form.append('category',category);
+      const response=await fetch('/api/admin?action=upload-media',{method:'POST',credentials:'same-origin',headers:{accept:'application/json'},body:form});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(result.error||'Upload failed.');
+      setFile(null);setAlt('');setCaption('');setCategory('general');setNotice('Image uploaded and registered.');await onReload();
+      const input=document.getElementById('nh-media-file');if(input)input.value='';
+    }catch(err){setError(err.message);}finally{setBusy(false);}
+  };
+  return <div className="nh-page"><div className="nh-page-heading"><div><div className="nh-overline">WEBSITE / ASSET MANAGEMENT</div><h1>Media library</h1><p>Upload and manage image assets stored in the existing Noctra media bucket. Deletion is blocked while a reference remains in CMS content or settings.</p></div><span className="nh-live">{items.length} ASSETS</span></div>
+    {error&&<div className="nh-alert nh-alert-wide">{error}</div>}{notice&&<div className="nh-success">{notice}</div>}
+    <section className="nh-panel nh-media-upload"><div className="nh-panel-head"><div><span className="nh-overline">UPLOAD / IMAGE ASSET</span><h2>Add an image</h2></div></div>
+      <form onSubmit={upload} className="nh-media-form">
+        <label className="nh-field"><span>Image file · JPG, PNG, WebP or GIF · maximum 12 MB</span><input id="nh-media-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e=>setFile(e.target.files?.[0]||null)} required/></label>
+        <Field label="Alternative text" value={alt} onChange={setAlt} placeholder="Describe the image for accessibility"/>
+        <Field label="Caption" value={caption} onChange={setCaption} placeholder="Optional caption"/>
+        <label className="nh-field"><span>Category</span><select value={category} onChange={e=>setCategory(e.target.value)}>{['general','logo','homepage','industry','service','portfolio','venture','testimonial'].map(x=><option key={x}>{x}</option>)}</select></label>
+        <button className="nh-primary" disabled={busy||!file}>{busy?'Uploading…':'Upload image'} ↗</button>
+      </form>
+    </section>
+    <div className="nh-media-grid">{items.length?items.map(item=><MediaCard key={item.id} item={item} onReload={onReload}/>):<section className="nh-panel nh-empty">No media assets have been uploaded.</section>}</div>
+  </div>;
+}
+function MediaCard({item,onReload}) {
+  const [alt,setAlt]=useState(item.alt_text||'');const [caption,setCaption]=useState(item.caption||'');const [category,setCategory]=useState(item.category||'general');const [error,setError]=useState('');const [busy,setBusy]=useState(false);
+  const save=async()=>{setBusy(true);setError('');try{await post('update-media',{id:item.id,alt_text:alt,caption,category});await onReload();}catch(err){setError(err.message);}finally{setBusy(false);}};
+  const remove=async()=>{if(!window.confirm('Delete this asset? Deletion will be refused if website content still references it.'))return;setBusy(true);setError('');try{await post('delete-media',{id:item.id});await onReload();}catch(err){setError(err.message);}finally{setBusy(false);}};
+  return <article className="nh-media-card"><div className="nh-media-preview"><img src={item.public_url} alt={alt||item.file_name} loading="lazy"/></div><div className="nh-media-meta"><strong>{item.file_name}</strong><small>{item.mime_type} · {(item.file_size/1024/1024).toFixed(2)} MB · {date(item.created_at)}</small><Field label="Alternative text" value={alt} onChange={setAlt}/><Field label="Caption" value={caption} onChange={setCaption}/><label className="nh-field"><span>Category</span><select value={category} onChange={e=>setCategory(e.target.value)}>{['general','logo','homepage','industry','service','portfolio','venture','testimonial'].map(x=><option key={x}>{x}</option>)}</select></label>{error&&<div className="nh-alert">{error}</div>}<div className="nh-media-actions"><button className="nh-outline" onClick={save} disabled={busy}>Save metadata</button><button className="nh-outline" onClick={remove} disabled={busy}>Delete</button></div></div></article>;
+}
+\nfunction UnavailableModule({active}) {
   const copy={
     media:'The existing media metadata table and storage bucket have been discovered. Upload, replacement and reference-safe deletion controls are not yet enabled.',
     users:'Role and permission records exist. User invitations, suspension controls and session revocation are being completed after initial administrator bootstrap.',
