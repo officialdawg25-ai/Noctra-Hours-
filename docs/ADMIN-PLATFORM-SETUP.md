@@ -56,7 +56,7 @@ Do not share the service-role key or bootstrap secret in chat, source files, scr
 
 ## Current implementation boundaries
 
-The current portal foundation supports authentication bootstrap/login/logout, permission-aware dashboard reads, draft content CRUD, submit/review/approve/publish/unpublish/archive workflow, content revisions, settings, enquiry status and notes, redirects, audit reads, administrator invitations, role changes and suspension.
+The current portal foundation supports authentication bootstrap/login/logout, permission-aware dashboard reads, draft content CRUD, submit/review/approve/publish/unpublish/archive workflow, content revisions, settings, enquiry status and notes, redirects, audit reads, administrator invitations, role changes and suspension, plus raster-image upload, metadata editing and reference-safe deletion.
 
 The public homepage currently consumes published CMS entries for Industries, Services and Companies & Ventures, while preserving the existing static presentation as a fallback.
 
