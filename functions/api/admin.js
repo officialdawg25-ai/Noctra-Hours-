@@ -185,7 +185,7 @@ export async function onRequest({request,env}) {
       try {
         const existing = await rest(env,'admin_members?select=user_id&limit=1');
         if ((existing.data || []).length) return json({error:'Initial setup has already been completed.'},409);
-        const roleResult = await rest(env,'admin_roles?select=id&id=eq.a904601f-123b-4e59-87ed-455ebc37d3ab&limit=1');
+        const roleResult = await rest(env,'admin_roles?select=id&name=eq.super_administrator&limit=1');
         const role = roleResult.data?.[0];
         if (!role) return json({error:'The super-administrator role is unavailable.'},500);
         const createUser = await fetch(baseUrl(env) + '/auth/v1/admin/users',{
@@ -348,6 +348,24 @@ export async function onRequest({request,env}) {
         await audit(env,context.user,'enquiry.note.create','admin_enquiry_notes',result.data?.[0]?.id,null,{enquiry_id:body.enquiry_id},request);
         return json({item:result.data?.[0] || null},201,responseHeaders);
       } catch { return json({error:'The internal note could not be saved.'},500,responseHeaders); }
+    }
+
+
+    if (action === 'create-redirect') {
+      if (!can(context,'seo.manage')) return json({error:'You do not have permission to manage redirects.'},403,responseHeaders);
+      const sourcePath=String(body.source_path||'').trim();
+      const destination=String(body.destination_url||'').trim();
+      const code=Number(body.status_code||301);
+      const safeDestination=destination.startsWith('/') || /^https:\/\//i.test(destination);
+      if (!sourcePath.startsWith('/') || sourcePath.startsWith('//') || sourcePath.length>500 || !safeDestination || destination.length>1000 || ![301,302,307,308].includes(code)) return json({error:'Enter a valid source path, destination and redirect status.'},400,responseHeaders);
+      try {
+        const result=await rest(env,'admin_redirects','POST',{
+          source_path:sourcePath,destination_url:destination,status_code:code,
+          is_active:true,created_by:context.user.id,updated_by:context.user.id
+        },'return=representation');
+        await audit(env,context.user,'seo.redirect.create','admin_redirects',result.data?.[0]?.id,null,{source_path:sourcePath,destination_url:destination,status_code:code},request);
+        return json({item:result.data?.[0]||null},201,responseHeaders);
+      } catch { return json({error:'The redirect could not be created. Check for an existing source path.'},409,responseHeaders); }
     }
 
     return json({error:'Unsupported administrative action.'},400,responseHeaders);
