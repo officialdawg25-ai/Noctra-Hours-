@@ -89,3 +89,5 @@
 .nh-enquiry-operations{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin:22px 0;padding:18px 0;border-top:1px solid var(--nh-line);border-bottom:1px solid var(--nh-line)}
 .nh-note-history{margin-top:22px}.nh-note-history article{padding:13px 0;border-top:1px solid var(--nh-line)}.nh-note-history article p{font-size:11px;line-height:1.7;color:#3c4550;margin:0 0 7px;white-space:pre-wrap}.nh-note-history article small{font-size:9px;color:#7d8590}
 @media(max-width:640px){.nh-enquiry-operations{grid-template-columns:1fr}}
+
+.nh-forgot{display:inline-flex;margin-top:14px;padding:6px 0;font-size:10px;color:#6e7783}

@@ -32,42 +32,18 @@ function Field({label,value,onChange,placeholder,type='text',multiline=false}) {
 }
 
 function AccessScreen({mode,onSuccess}) {
-  const [email,setEmail]=useState('');
-  const [password,setPassword]=useState('');
-  const [displayName,setDisplayName]=useState('');
-  const [token,setToken]=useState('');
-  const [busy,setBusy]=useState(false);
-  const [error,setError]=useState('');
-  const submit=async event=>{
-    event.preventDefault();setBusy(true);setError('');
-    try {
-      const result=await post(mode==='setup'?'bootstrap':'login',{
-        email,password,display_name:displayName,token
-      });
-      onSuccess(result);
-    } catch(err) { setError(err.message); }
-    finally { setBusy(false); }
-  };
-  return <main className="nh-access">
-    <div className="nh-access-mark"><span>N</span><i>NOCTRA HOURS</i></div>
-    <div className="nh-access-panel">
-      <div className="nh-overline">NOCTRA HOURS / ADMINISTRATION</div>
-      <h1>{mode==='setup'?'Establish administrator access.':'Administrative sign in.'}</h1>
-      <p>{mode==='setup'
-        ? 'Create the first authorised administrator. This one-time setup is restricted to the configured owner email and bootstrap secret.'
-        : 'Sign in with an authorised Noctra Hours administrator account.'}</p>
-      <form onSubmit={submit}>
-        {mode==='setup'&&<Field label="Display name" value={displayName} onChange={setDisplayName} placeholder="Your name"/>}
-        <Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="name@company.com"/>
-        <Field label="Password" type="password" value={password} onChange={setPassword} placeholder={mode==='setup'?'At least 12 characters':'Your password'}/>
-        {mode==='setup'&&<Field label="One-time setup key" type="password" value={token} onChange={setToken} placeholder="Cloudflare bootstrap secret"/>}
-        {error&&<div className="nh-alert">{error}</div>}
-        <button className="nh-primary" disabled={busy}>{busy?'Please wait…':mode==='setup'?'Create super administrator':'Sign in'} <span>↗</span></button>
-      </form>
-      <div className="nh-access-foot">PRIVATE ADMINISTRATIVE ENVIRONMENT <span>·</span> SECURE SESSION</div>
-    </div>
-    <footer>NOCTRA HOURS <span>—</span> DIGITAL DEVELOPMENT STUDIO</footer>
-  </main>;
+  const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [displayName,setDisplayName]=useState('');const [token,setToken]=useState('');
+  const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [notice,setNotice]=useState('');
+  const submit=async event=>{event.preventDefault();setBusy(true);setError('');setNotice('');try{const result=await post(mode==='setup'?'bootstrap':'login',{email,password,display_name:displayName,token});onSuccess(result);}catch(err){setError(err.message);}finally{setBusy(false);}};
+  const reset=async()=>{setError('');setNotice('');if(!email.trim()){setError('Enter your administrator email address first.');return;}setBusy(true);try{const result=await post('password-reset',{email});setNotice(result.message||'If this account is eligible, a reset email will be sent.');}catch(err){setError(err.message);}finally{setBusy(false);}};
+  return <main className="nh-access"><div className="nh-access-mark"><span>N</span><i>NOCTRA HOURS</i></div><div className="nh-access-panel"><div className="nh-overline">NOCTRA HOURS / ADMINISTRATION</div><h1>{mode==='setup'?'Establish administrator access.':'Administrative sign in.'}</h1><p>{mode==='setup'?'Create the first authorised administrator. This one-time setup is restricted to the configured owner email and bootstrap secret.':'Sign in with an authorised Noctra Hours administrator account.'}</p><form onSubmit={submit}>{mode==='setup'&&<Field label="Display name" value={displayName} onChange={setDisplayName} placeholder="Your name"/>}<Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="name@company.com"/><Field label="Password" type="password" value={password} onChange={setPassword} placeholder={mode==='setup'?'At least 12 characters':'Your password'}/>{mode==='setup'&&<Field label="One-time setup key" type="password" value={token} onChange={setToken} placeholder="Cloudflare bootstrap secret"/>}{error&&<div className="nh-alert">{error}</div>}{notice&&<div className="nh-success">{notice}</div>}<button className="nh-primary" disabled={busy}>{busy?'Please wait…':mode==='setup'?'Create super administrator':'Sign in'} <span>↗</span></button></form>{mode!=='setup'&&<button type="button" className="nh-text-button nh-forgot" onClick={reset} disabled={busy}>Forgot password? Request a reset ↗</button>}<div className="nh-access-foot">PRIVATE ADMINISTRATIVE ENVIRONMENT <span>·</span> SECURE SESSION</div></div><footer>NOCTRA HOURS <span>—</span> DIGITAL DEVELOPMENT STUDIO</footer></main>;
+}
+function ResetPasswordScreen(){
+ const params=new URLSearchParams(window.location.hash.replace(/^#/,''));
+ const accessToken=params.get('access_token')||'',recoveryType=params.get('type')||'';
+ const [password,setPassword]=useState(''),[confirm,setConfirm]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const submit=async event=>{event.preventDefault();setError('');if(recoveryType!=='recovery'||!accessToken){setError('This recovery link is invalid or has expired. Request a new reset email.');return;}if(password.length<12){setError('Use at least 12 characters for the new password.');return;}if(password!==confirm){setError('The passwords do not match.');return;}setBusy(true);try{await post('update-recovered-password',{access_token:accessToken,password});window.history.replaceState({},document.title,'/admin');window.location.assign('/admin');}catch(err){setError(err.message);}finally{setBusy(false);}};
+ return <main className="nh-access"><div className="nh-access-mark"><span>N</span><i>NOCTRA HOURS</i></div><div className="nh-access-panel"><div className="nh-overline">NOCTRA HOURS / ACCOUNT RECOVERY</div><h1>Set a new password.</h1><p>Choose a strong password for your administrator account.</p><form onSubmit={submit}><Field label="New password" type="password" value={password} onChange={setPassword} placeholder="At least 12 characters"/><Field label="Confirm new password" type="password" value={confirm} onChange={setConfirm} placeholder="Repeat your password"/>{error&&<div className="nh-alert">{error}</div>}<button className="nh-primary" disabled={busy||!accessToken}>{busy?'Updating…':'Update password'} <span>↗</span></button></form><a className="nh-text-button" href="/admin">Back to sign in ↗</a><div className="nh-access-foot">PRIVATE ADMINISTRATIVE ENVIRONMENT <span>·</span> SECURE SESSION</div></div><footer>NOCTRA HOURS <span>—</span> DIGITAL DEVELOPMENT STUDIO</footer></main>;
 }
 
 function Dashboard({data,onNavigate}) {
@@ -184,6 +160,7 @@ export default function AdminApp() {
   const logout=async()=>{await post('logout').catch(()=>{});setAuth({loading:false,authenticated:false,setup_required:false});setActive('dashboard');};
   const navigate=id=>{setActive(id);setError('');};
   const title=labels[active]||'Administration';
+  if(window.location.pathname==='/admin/reset-password')return <ResetPasswordScreen/>;
   if(auth.loading)return <div className="nh-loading">NOCTRA HOURS <span>CONNECTING TO ADMINISTRATION…</span></div>;
   if(auth.configuration_missing || auth.bootstrap_unavailable)return <main className="nh-access"><div className="nh-access-panel"><div className="nh-overline">ADMINISTRATION / CONFIGURATION REQUIRED</div><h1>Administrative access is not configured.</h1><p>The secure server connection or one-time administrator bootstrap is missing required Cloudflare Pages environment variables. No browser-side database access will be enabled as a workaround.</p><p className="nh-note">Required: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, ADMIN_SESSION_SECRET. For first-time setup also configure ADMIN_BOOTSTRAP_EMAIL and ADMIN_BOOTSTRAP_SECRET.</p></div></main>;
   if(!auth.authenticated)return <AccessScreen mode={auth.setup_required?'setup':'login'} onSuccess={loginSuccess}/>;

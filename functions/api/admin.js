@@ -246,6 +246,30 @@ export async function onRequest({request,env}) {
       }
     }
 
+    if (action === 'password-reset') {
+      const email=String(body.email||'').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({error:'Enter a valid email address.'},400,responseHeaders);
+      try {
+        if (!await loginRateAllowed(env,request,email)) return json({ok:true,message:'If this account is eligible, a password reset email will be sent.'},200,responseHeaders);
+        const redirectTo=new URL('/admin/reset-password',request.url).toString();
+        await fetch(baseUrl(env)+'/auth/v1/recover?redirect_to='+encodeURIComponent(redirectTo),{
+          method:'POST',headers:{apikey:anonKey(env),'content-type':'application/json'},
+          body:JSON.stringify({email})
+        });
+      } catch {}
+      return json({ok:true,message:'If this account is eligible, a password reset email will be sent.'},200,responseHeaders);
+    }
+    if (action === 'update-recovered-password') {
+      const accessToken=String(body.access_token||''),password=String(body.password||'');
+      if (accessToken.length<40||accessToken.length>5000||password.length<12||password.length>256) return json({error:'A valid recovery session and a password of at least 12 characters are required.'},400,responseHeaders);
+      const response=await fetch(baseUrl(env)+'/auth/v1/user',{
+        method:'PUT',headers:{apikey:anonKey(env),authorization:'Bearer '+accessToken,'content-type':'application/json'},
+        body:JSON.stringify({password})
+      });
+      if (!response.ok) return json({error:'The recovery link is invalid or has expired. Request a new password reset email.'},401,responseHeaders);
+      await fetch(baseUrl(env)+'/auth/v1/logout?scope=global',{method:'POST',headers:{apikey:anonKey(env),authorization:'Bearer '+accessToken}}).catch(()=>{});
+      return json({ok:true},200,responseHeaders);
+    }
     if (action === 'login') {
       if (typeof body.email !== 'string' || typeof body.password !== 'string') return json({error:'Enter your email and password.'},400);
       try {

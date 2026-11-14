@@ -60,10 +60,10 @@ The initial administrator email must be supplied by the project owner. The boots
 1. Restore the Noctra Hours Supabase project if it is paused.
 2. Configure the six environment variables above in Cloudflare Pages Production.
 3. Configure the same variables in Preview if the first setup will be tested on a preview deployment. Use a different bootstrap secret in Preview if desired.
-4. Ensure Supabase Auth email/password sign-in is enabled.
-5. Open \`/admin\`.
-6. The first-time setup screen accepts only the exact configured bootstrap email and one-time bootstrap secret.
-7. Choose a strong administrator password. The server creates the Supabase Auth identity and attaches the existing \`super_administrator\` role.
+4. Ensure Supabase Auth email/password sign-in and SMTP email delivery are enabled.
+5. Add \`https://noctra-hours.pages.dev/admin/reset-password\` to Supabase Auth → URL Configuration → Redirect URLs. Add the exact preview hostname used for testing as well.
+6. Open \`/admin\`.
+7. The first-time setup screen accepts only the exact configured bootstrap email and one-time bootstrap secret. Choose a strong administrator password. The server creates the Supabase Auth identity and attaches the existing \`super_administrator\` role.
 8. Once the first membership exists, bootstrap is permanently closed by a server-side membership check.
 9. Remove \`ADMIN_BOOTSTRAP_SECRET\` from Cloudflare after successful setup. Keep the session encryption secret.
 
@@ -78,7 +78,7 @@ Do not share the service-role key, session secret or bootstrap secret in chat, s
 - Website settings for identity, homepage visibility, navigation, footer, contact, social links, business profile, brand tokens, SEO defaults and maintenance mode.
 - Media upload, metadata editing and reference-safe deletion.
 - Enquiry status updates, internal notes and follow-up fields.
-- Administrator invitations, role changes, suspension and custom permission roles.
+- Administrator invitations, role changes, suspension, custom permission roles and password recovery.
 - Audit history and publication history.
 - SEO redirect creation and enable/disable controls.
 - Integration configuration presence and live connectivity checks.
