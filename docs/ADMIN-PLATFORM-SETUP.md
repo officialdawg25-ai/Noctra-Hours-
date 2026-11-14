@@ -9,7 +9,7 @@ This document describes the server-side configuration required to activate the a
 - CMS records: existing `admin_content` with JSONB content payloads.
 - Settings: existing `admin_site_settings`.
 - Media metadata: existing `admin_media_assets`; public asset bucket: `noctra-media`.
-- Revisions and audit: existing `admin_content_revisions` and `admin_audit_logs`, extended by migration `20261114130009`.
+- Revisions and audit: existing `admin_content_revisions` and `admin_audit_logs`, extended by migration `20261114130000`.
 - Server API: Cloudflare Pages Function at `/api/admin`.
 - Public CMS feed: `/api/public-content`, which returns only records whose status is `published`.
 - Browser code never receives the Supabase service-role key.
