@@ -199,6 +199,8 @@ export async function onRequest({request,env}) {
     const contentType=request.headers.get('content-type')||'';
     let body, uploadFile=null;
     if (contentType.includes('multipart/form-data')) {
+      const declaredSize=Number(request.headers.get('content-length')||0);
+      if (declaredSize>13631488) return json({error:'Upload request exceeds the 13 MB limit.'},413);
       try {
         const form=await request.formData();
         uploadFile=form.get('file');
@@ -453,6 +455,7 @@ export async function onRequest({request,env}) {
         const found=await rest(env,'admin_media_assets?select=*&id=eq.'+encodeURIComponent(body.id)+'&limit=1');
         const asset=found.data?.[0];
         if (!asset) return json({error:'Media asset not found.'},404,responseHeaders);
+        if (asset.bucket!=='noctra-media') return json({error:'This asset belongs to an unsupported storage bucket.'},409,responseHeaders);
         const content=await rest(env,'admin_content?select=id,data');
         const settings=await rest(env,'admin_site_settings?select=key,value');
         const publicUrl=asset.metadata?.public_url || (baseUrl(env)+'/storage/v1/object/public/'+asset.bucket+'/'+asset.storage_path.split('/').map(encodeURIComponent).join('/'));
