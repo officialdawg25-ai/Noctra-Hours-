@@ -538,6 +538,29 @@ export async function onRequest({request,env}) {
       } catch { return json({error:'The administrator invitation could not be completed.'},500,responseHeaders); }
     }
 
+    if (action === 'create-role') {
+      if (!can(context,'users.manage')) return json({error:'You do not have permission to create administrative roles.'},403,responseHeaders);
+      const name=String(body.name||'').trim().toLowerCase();
+      const description=String(body.description||'').trim().slice(0,500);
+      const requested=Array.isArray(body.permissions)?[...new Set(body.permissions.map(String))]:[];
+      if (!/^[a-z][a-z0-9_]{1,39}$/.test(name) || !requested.length || requested.length>40) return json({error:'Enter a valid role key and select at least one permission.'},400,responseHeaders);
+      try {
+        const allowed=await rest(env,'admin_permissions?select=id&id=in.('+requested.map(encodeURIComponent).join(',')+')');
+        if ((allowed.data||[]).length!==requested.length) return json({error:'One or more selected permissions are invalid.'},400,responseHeaders);
+        const created=await rest(env,'admin_roles','POST',{name,description,is_system:false},'return=representation');
+        const role=created.data?.[0];
+        if (!role) return json({error:'The role could not be created.'},500,responseHeaders);
+        try {
+          await rest(env,'admin_role_permissions','POST',requested.map(permission_id=>({role_id:role.id,permission_id})),'return=minimal');
+        } catch {
+          await rest(env,'admin_roles?id=eq.'+encodeURIComponent(role.id),'DELETE').catch(()=>{});
+          return json({error:'The role permissions could not be saved; the new role was rolled back.'},500,responseHeaders);
+        }
+        await audit(env,context.user,'admin.role.create','admin_roles',role.id,null,{name,permissions:requested},request);
+        return json({role:{...role,permissions:requested}},201,responseHeaders);
+      } catch { return json({error:'The role could not be created. Check whether the role key already exists.'},409,responseHeaders); }
+    }
+
     if (action === 'update-role') {
       if (!can(context,'users.manage')) return json({error:'You do not have permission to change administrative roles.'},403,responseHeaders);
       if (!body.user_id || !body.role_id || body.user_id===context.user.id) return json({error:'Select another administrator and a valid role.'},400,responseHeaders);
@@ -653,10 +676,11 @@ export async function onRequest({request,env}) {
       }
       if (resource === 'users') {
         if (!can(context,'users.manage')) return json({error:'Permission denied.'},403,headers);
-        const [members,roles,permissions] = await Promise.all([
+        const [members,roles,permissions,catalog] = await Promise.all([
           rest(env,'admin_members?select=user_id,display_name,active,suspended_at,role_id,created_at,last_login_at&order=created_at.asc'),
           rest(env,'admin_roles?select=id,name,description,is_system&order=name.asc'),
-          rest(env,'admin_role_permissions?select=role_id,permission_id')
+          rest(env,'admin_role_permissions?select=role_id,permission_id'),
+          rest(env,'admin_permissions?select=id,description&order=id.asc')
         ]);
         const usersResponse=await fetch(baseUrl(env)+'/auth/v1/admin/users?page=1&per_page=200',{
           headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env),accept:'application/json'}
@@ -671,7 +695,7 @@ export async function onRequest({request,env}) {
         }
         return json({
           items:(members.data||[]).map(m=>({...m,email:userMap.get(m.user_id)||'',role:roleMap.get(m.role_id)||'unknown'})),
-          roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} ))
+          roles:(roles.data||[]).map(r=>({...r,permissions:permissionMap.get(r.id)||[]} )),\n          permission_catalog:catalog.data||[]
         },200,headers);
       }
       if (resource === 'preview') {
