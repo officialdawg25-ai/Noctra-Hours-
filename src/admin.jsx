@@ -314,7 +314,8 @@ function MediaCard({item,onReload}) {
   const remove=async()=>{if(!window.confirm('Delete this asset? Deletion will be refused if website content still references it.'))return;setBusy(true);setError('');try{await post('delete-media',{id:item.id});await onReload();}catch(err){setError(err.message);}finally{setBusy(false);}};
   return <article className="nh-media-card"><div className="nh-media-preview"><img src={item.public_url} alt={alt||item.file_name} loading="lazy"/></div><div className="nh-media-meta"><strong>{item.file_name}</strong><small>{item.mime_type} · {(item.file_size/1024/1024).toFixed(2)} MB · {date(item.created_at)}</small><Field label="Alternative text" value={alt} onChange={setAlt}/><Field label="Caption" value={caption} onChange={setCaption}/><label className="nh-field"><span>Category</span><select value={category} onChange={e=>setCategory(e.target.value)}>{['general','logo','homepage','industry','service','portfolio','venture','testimonial'].map(x=><option key={x}>{x}</option>)}</select></label>{error&&<div className="nh-alert">{error}</div>}<div className="nh-media-actions"><button className="nh-outline" onClick={save} disabled={busy}>Save metadata</button><button className="nh-outline" onClick={remove} disabled={busy}>Delete</button></div></div></article>;
 }
-\nfunction UnavailableModule({active}) {
+
+function UnavailableModule({active}) {
   const copy={
     media:'The existing media metadata table and storage bucket have been discovered. Upload, replacement and reference-safe deletion controls are not yet enabled.',
     users:'Role and permission records exist. User invitations, suspension controls and session revocation are being completed after initial administrator bootstrap.',
