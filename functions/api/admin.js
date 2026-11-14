@@ -396,23 +396,41 @@ export async function onRequest({request,env}) {
       if (!allowedTypes.has(uploadFile.type) || uploadFile.size<=0 || uploadFile.size>12582912 || !(await validImageSignature(uploadFile))) return json({error:'Use a valid JPG, PNG, WebP or GIF image up to 12 MB.'},400,responseHeaders);
       const cleanName=String(uploadFile.name||'image').normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(-100)||'image';
       const objectPath=new Date().toISOString().slice(0,10)+'/'+crypto.randomUUID()+'-'+cleanName;
+      const storagePath=objectPath.split('/').map(encodeURIComponent).join('/');
+      let stored=false;
       try {
-        const storageResponse=await fetch(baseUrl(env)+'/storage/v1/object/noctra-media/'+objectPath.split('/').map(encodeURIComponent).join('/'),{
+        const storageResponse=await fetch(baseUrl(env)+'/storage/v1/object/noctra-media/'+storagePath,{
           method:'POST',
           headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env),'content-type':uploadFile.type,'x-upsert':'false'},
           body:uploadFile
         });
         if (!storageResponse.ok) return json({error:'Storage rejected the upload. Check the media bucket configuration.'},400,responseHeaders);
-        const publicUrl=baseUrl(env)+'/storage/v1/object/public/noctra-media/'+objectPath.split('/').map(encodeURIComponent).join('/');
-        const record=await rest(env,'admin_media_assets','POST',{
-          storage_path:objectPath,bucket:'noctra-media',file_name:cleanName,mime_type:uploadFile.type,
-          file_size:uploadFile.size,alt_text:body.alt_text,caption:body.caption,category:body.category,
-          created_by:context.user.id,metadata:{public_url:publicUrl}
-        },'return=representation');
+        stored=true;
+        const publicUrl=baseUrl(env)+'/storage/v1/object/public/noctra-media/'+storagePath;
+        let record;
+        try {
+          record=await rest(env,'admin_media_assets','POST',{
+            storage_path:objectPath,bucket:'noctra-media',file_name:cleanName,mime_type:uploadFile.type,
+            file_size:uploadFile.size,alt_text:body.alt_text,caption:body.caption,category:body.category,
+            created_by:context.user.id,metadata:{public_url:publicUrl}
+          },'return=representation');
+        } catch {
+          await fetch(baseUrl(env)+'/storage/v1/object/noctra-media/'+storagePath,{
+            method:'DELETE',headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env)}
+          }).catch(()=>{});
+          stored=false;
+          throw new Error('Media metadata could not be saved');
+        }
         const item=record.data?.[0];
-        await audit(env,context.user,'media.upload','admin_media_assets',item?.id,null,{storage_path:objectPath,mime_type:uploadFile.type,file_size:uploadFile.size},request);
-        return json({item:item?{...item,public_url:publicUrl}:null},201,responseHeaders);
-      } catch { return json({error:'The image could not be stored. Please retry.'},500,responseHeaders); }
+        if (!item) throw new Error('Media metadata response missing');
+        await audit(env,context.user,'media.upload','admin_media_assets',item.id,null,{storage_path:objectPath,mime_type:uploadFile.type,file_size:uploadFile.size},request).catch(()=>{});
+        return json({item:{...item,public_url:publicUrl}},201,responseHeaders);
+      } catch {
+        if (stored) await fetch(baseUrl(env)+'/storage/v1/object/noctra-media/'+storagePath,{
+          method:'DELETE',headers:{apikey:serviceKey(env),authorization:'Bearer '+serviceKey(env)}
+        }).catch(()=>{});
+        return json({error:'The image could not be stored. Please retry.'},500,responseHeaders);
+      }
     }
 
     if (action === 'update-media') {
