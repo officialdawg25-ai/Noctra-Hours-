@@ -228,7 +228,7 @@ export default function AdminApp() {
   const navigate=id=>{setActive(id);setError('');};
   const title=labels[active]||'Administration';
   if(auth.loading)return <div className="nh-loading">NOCTRA HOURS <span>CONNECTING TO ADMINISTRATION…</span></div>;
-  if(auth.configuration_missing)return <main className="nh-access"><div className="nh-access-panel"><div className="nh-overline">ADMINISTRATION / CONFIGURATION REQUIRED</div><h1>Administrative access is not configured.</h1><p>The secure server connection is missing required Cloudflare Pages environment variables. No browser-side database access will be enabled as a workaround.</p><p className="nh-note">Required server configuration: Supabase URL, publishable/anon key, service-role secret and a strong session encryption secret.</p></div></main>;
+  if(auth.configuration_missing || auth.bootstrap_unavailable)return <main className="nh-access"><div className="nh-access-panel"><div className="nh-overline">ADMINISTRATION / CONFIGURATION REQUIRED</div><h1>Administrative access is not configured.</h1><p>The secure server connection or one-time administrator bootstrap is missing required Cloudflare Pages environment variables. No browser-side database access will be enabled as a workaround.</p><p className="nh-note">Required: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, ADMIN_SESSION_SECRET. For first-time setup also configure ADMIN_BOOTSTRAP_EMAIL and ADMIN_BOOTSTRAP_SECRET.</p></div></main>;
   if(!auth.authenticated)return <AccessScreen mode={auth.setup_required?'setup':'login'} onSuccess={loginSuccess}/>;
   return <div className="nh-admin">
     <aside className="nh-sidebar">
